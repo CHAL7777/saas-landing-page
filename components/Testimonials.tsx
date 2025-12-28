@@ -37,7 +37,7 @@ const studentTestimonials: Testimonial[] = [
 
 export default function Testimonials() {
   return (
-    <section className="py-32 bg-[#020617] relative overflow-hidden">
+    <section id="testimonials" className="py-32 bg-[#020617] relative overflow-hidden">
       {/* Background radial highlight */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[600px] bg-emerald-500/5 blur-[120px] pointer-events-none rounded-full" />
 

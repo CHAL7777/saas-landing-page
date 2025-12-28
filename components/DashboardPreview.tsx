@@ -1,9 +1,13 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Clock, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
+import { BookOpen, Clock, CheckCircle2, AlertCircle, ChevronRight, TrendingUp } from "lucide-react";
+import { DashboardPreviewProps, DashboardPreviewCourse } from "@/types/dashboard";
+import { useStats } from "@/hooks/useStats";
+import { useTasks } from "@/hooks/useTasks";
 
-const courses = [
+// Default course data
+const DEFAULT_COURSES: DashboardPreviewCourse[] = [
   {
     name: "Organic Chemistry II",
     code: "CHEM-202",
@@ -30,7 +34,83 @@ const courses = [
   }
 ];
 
-export default function DashboardPreview() {
+// Helper function to calculate course progress from tasks
+function calculateCourseProgress(tasks: any[], courseName: string): number {
+  const courseTasks = tasks.filter(task => task.course === courseName);
+  if (courseTasks.length === 0) return 0;
+  
+  const completedTasks = courseTasks.filter(task => task.completed);
+  return Math.round((completedTasks.length / courseTasks.length) * 100);
+}
+
+// Helper function to get next deadline from tasks
+function getNextDeadline(tasks: any[], courseName: string): string {
+  const courseTasks = tasks.filter(task => task.course === courseName && !task.completed);
+  if (courseTasks.length === 0) return "All caught up!";
+  
+  // Sort by due date priority (simple implementation)
+  const urgentTasks = courseTasks.filter(task => task.priority === 'high');
+  if (urgentTasks.length > 0) return "High Priority Task";
+  
+  return courseTasks[0]?.due || "Upcoming Task";
+}
+
+// Helper function to determine course status
+function getCourseStatus(progress: number): 'good' | 'warning' | 'urgent' {
+  if (progress >= 80) return 'good';
+  if (progress >= 50) return 'warning';
+  return 'urgent';
+}
+
+export default function DashboardPreview(props: DashboardPreviewProps = {}) {
+  const { courses: customCourses, semester, gpa: customGPA, streak: customStreak, timeline, theme, useRealData = false } = props;
+  
+  // Use real data hooks if useRealData is true
+  const { stats } = useStats();
+  const { tasks } = useTasks();
+  
+  // Determine data source
+  const courses = customCourses || (useRealData ? generateCoursesFromTasks(tasks) : DEFAULT_COURSES);
+  const gpa = customGPA || (useRealData ? stats.currentGPA : "3.82");
+  const streak = customStreak !== undefined ? customStreak : (useRealData ? stats.studyStreak : 12);
+  
+  // Use custom semester or default
+  const semesterInfo = semester || { term: "Spring", year: "2025", credits: 16 };
+  
+  // Use custom timeline or generate default
+  const timelineInfo = timeline || {
+    startDate: "March 12",
+    endDate: "March 19",
+    days: [12, 13, 14, 15, 16, 17, 18]
+  };
+
+  // Generate courses from real task data
+  function generateCoursesFromTasks(tasks: any[]): DashboardPreviewCourse[] {
+    const uniqueCourses = [...new Set(tasks.map(task => task.course))];
+    
+    return uniqueCourses.map(courseName => {
+      const progress = calculateCourseProgress(tasks, courseName);
+      const nextDeadline = getNextDeadline(tasks, courseName);
+      const status = getCourseStatus(progress);
+      
+      // Assign colors based on status
+      const colorMap = {
+        good: "from-blue-500 to-indigo-400",
+        warning: "from-emerald-500 to-teal-400",
+        urgent: "from-rose-500 to-orange-400"
+      };
+      
+      return {
+        name: courseName,
+        code: courseName.split(' ').map(word => word.substring(0, 3).toUpperCase()).join('-'),
+        progress,
+        nextDeadline,
+        status,
+        color: colorMap[status]
+      };
+    }).slice(0, 3); // Limit to 3 courses for preview
+  }
+
   return (
     <div className="w-full max-w-5xl mx-auto p-6 md:p-12 bg-slate-950 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden">
       {/* Subtle Mesh Background */}
@@ -41,12 +121,18 @@ export default function DashboardPreview() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
             <h2 className="text-3xl font-black text-white tracking-tight italic">Semester Overview<span className="text-emerald-500">.</span></h2>
-            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">Spring 2025 • 16 Credits</p>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-widest mt-1">{semesterInfo.term} {semesterInfo.year} • {semesterInfo.credits} Credits</p>
           </div>
           <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-2 rounded-2xl">
             <div className="px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-               <span className="text-emerald-400 text-xs font-black tracking-tighter">Current GPA: 3.82</span>
+               <span className="text-emerald-400 text-xs font-black tracking-tighter">Current GPA: {gpa}</span>
             </div>
+            {streak > 0 && (
+              <div className="px-4 py-2 bg-orange-500/10 rounded-xl border border-orange-500/20 flex items-center gap-2">
+                <TrendingUp size={14} className="text-orange-400" />
+                <span className="text-orange-400 text-xs font-black tracking-tighter">{streak} day streak</span>
+              </div>
+            )}
             <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10" />
           </div>
         </div>
@@ -100,16 +186,16 @@ export default function DashboardPreview() {
           ))}
         </div>
 
-        {/* Timeline Preview (Simplified) */}
+        {/* Timeline Preview */}
         <div className="mt-12 p-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem]">
             <div className="flex items-center justify-between mb-8">
                 <h4 className="text-white font-black uppercase tracking-widest text-xs flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-emerald-500" /> Weekly Sprint
                 </h4>
-                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">March 12 - March 19</span>
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{timelineInfo.startDate} - {timelineInfo.endDate}</span>
             </div>
             <div className="flex gap-4">
-                {[12, 13, 14, 15, 16, 17, 18].map((day) => (
+                {timelineInfo.days?.map((day) => (
                     <div key={day} className={`flex-1 flex flex-col items-center py-4 rounded-2xl border transition-colors ${day === 14 ? 'bg-emerald-500/10 border-emerald-500/30' : 'border-transparent text-slate-600'}`}>
                         <span className="text-[10px] font-black mb-1">MAR</span>
                         <span className={`text-lg font-black ${day === 14 ? 'text-emerald-400' : 'text-slate-400'}`}>{day}</span>

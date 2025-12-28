@@ -1,9 +1,11 @@
+
 "use client";
 import { useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Menu, X, GraduationCap, LayoutDashboard } from "lucide-react";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { FallbackSignedIn } from "./AuthFallback";
 import Link from "next/link";
+import LogoutSystem from "./LogoutSystem";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,10 +23,9 @@ export default function Navbar() {
     ["1px solid rgba(255, 255, 255, 0)", "1px solid rgba(16, 185, 129, 0.1)"]
   );
 
+  // Simplified navigation for authenticated users only
   const navLinks = [
-    { name: "Features", href: "#features" },
-    { name: "Methodology", href: "#how-it-works" },
-    { name: "Pricing", href: "#pricing" },
+    { name: "Dashboard", href: "/dashboard" },
   ];
 
   return (
@@ -34,49 +35,36 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
+        <Link href="/dashboard" className="flex items-center gap-3 group cursor-pointer">
           <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
             <GraduationCap size={22} className="text-slate-950" />
           </div>
           <span className="text-xl font-black tracking-tighter text-white uppercase italic">
-            Scholarly<span className="text-emerald-400 not-italic">.</span>
+            StudyMaster<span className="text-emerald-400 not-italic">.</span>
           </span>
         </Link>
         
-        {/* Desktop Links */}
+        {/* Desktop Navigation - Authenticated Users Only */}
         <div className="hidden md:flex items-center gap-10">
           <div className="flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
             {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className="hover:text-emerald-400 transition-colors">
+              <Link key={link.name} href={link.href} className="hover:text-emerald-400 transition-colors">
                 {link.name}
-              </a>
+              </Link>
             ))}
           </div>
 
           <div className="h-6 w-px bg-white/10 mx-2" />
 
-          {/* Authentication Logic */}
+          {/* Authentication Required - No Public Access */}
           <div className="flex items-center gap-4">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className="text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-                  Log In
-                </button>
-              </SignInButton>
-              <SignInButton mode="modal">
-                <button className="px-5 py-2.5 bg-emerald-500 text-slate-950 rounded-full text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                  Join Free
-                </button>
-              </SignInButton>
-            </SignedOut>
-
-            <SignedIn>
+            <FallbackSignedIn>
               <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/10 transition-all">
                 <LayoutDashboard size={14} />
                 Dashboard
               </Link>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
+              <LogoutSystem afterSignOutUrl="/sign-in" />
+            </FallbackSignedIn>
           </div>
         </div>
 
@@ -97,22 +85,18 @@ export default function Navbar() {
           >
             <div className="p-8 flex flex-col gap-6">
               {navLinks.map((link) => (
-                <a key={link.name} href={link.href} className="text-2xl font-black text-white uppercase tracking-tighter">
+                <Link key={link.name} href={link.href} className="text-2xl font-black text-white uppercase tracking-tighter">
                   {link.name}
-                </a>
-              ))}
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="w-full bg-emerald-500 text-slate-950 py-4 rounded-2xl font-black uppercase tracking-widest text-sm">
-                    Get Started
-                  </button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <Link href="/dashboard" className="w-full bg-white/10 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center">
-                  Go to Dashboard
                 </Link>
-              </SignedIn>
+              ))}
+              <FallbackSignedIn>
+                <div className="space-y-4">
+                  <Link href="/dashboard" className="block w-full bg-white/10 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center">
+                    Go to Dashboard
+                  </Link>
+                  <LogoutSystem afterSignOutUrl="/sign-in" />
+                </div>
+              </FallbackSignedIn>
             </div>
           </motion.div>
         )}

@@ -1,52 +1,82 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Coffee, 
-  Brain, 
-  Volume2, 
-  VolumeX, 
   X,
-  Music
+  Music,
+  Target,
+  BookOpen,
+  Coffee,
+  Brain,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import Link from "next/link";
+import Timer from "@/components/Timer";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface Task {
+  id: string;
+  title: string;
+  course: string;
+  priority: 'high' | 'medium' | 'low';
+  completed: boolean;
+}
 
 export default function FocusMode() {
-  const [seconds, setSeconds] = useState(25 * 60);
-  const [isActive, setIsActive] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showTasks, setShowTasks] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
+  // Redirect to sign-in if not authenticated
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isActive && seconds > 0) {
-      interval = setInterval(() => setSeconds(s => s - 1), 1000);
-    } else if (seconds === 0) {
-      setIsActive(false);
-      setIsBreak(!isBreak);
-      setSeconds(isBreak ? 25 * 60 : 5 * 60);
-      // Play a subtle notification sound here
+    if (!isLoading && !isAuthenticated) {
+      router.push('/sign-in');
     }
-    return () => clearInterval(interval);
-  }, [isActive, seconds, isBreak]);
+  }, [isAuthenticated, isLoading, router]);
 
-  const formatTime = (s: number) => {
-    const mins = Math.floor(s / 60);
-    const secs = s % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // Mock tasks - in real app, these would come from props or context
+  const [tasks] = useState<Task[]>([
+    { id: '1', title: 'Read Chapter 5: Organic Reactions', course: 'Chemistry', priority: 'high', completed: false },
+    { id: '2', title: 'Practice Problems 1-10', course: 'Mathematics', priority: 'medium', completed: false },
+    { id: '3', title: 'Review Lecture Notes', course: 'Physics', priority: 'low', completed: false },
+  ]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const handleTimerComplete = (sessionType: 'work' | 'break') => {
+    console.log(`${sessionType} session completed!`);
+    // Could show stats, achievements, or next steps here
   };
 
-  const progress = isBreak 
-    ? (seconds / (5 * 60)) * 100 
-    : (seconds / (25 * 60)) * 100;
+  const handleTimerTick = (seconds: number, sessionType: 'work' | 'break') => {
+    // Update real-time stats or achievements here
+  };
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-6 overflow-hidden">
       {/* Ambient Background Glow */}
-      <div className={`absolute inset-0 transition-colors duration-1000 ${isBreak ? 'bg-blue-500/5' : 'bg-emerald-500/5'}`} />
+      <div className={`absolute inset-0 transition-colors duration-1000 bg-emerald-500/5`} />
       
       {/* Header */}
       <div className="absolute top-10 left-10 right-10 flex justify-between items-center z-10">
@@ -64,74 +94,84 @@ export default function FocusMode() {
         </Link>
       </div>
 
+      {/* Task Selection */}
+      <AnimatePresence>
+        {!selectedTask && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-32 left-1/2 transform -translate-x-1/2 z-20"
+          >
+            <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 max-w-md">
+              <h3 className="text-white font-bold text-center mb-4">Choose Your Focus Task</h3>
+              <div className="space-y-3">
+                {tasks.map((task) => (
+                  <button
+                    key={task.id}
+                    onClick={() => setSelectedTask(task)}
+                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Target size={16} className="text-emerald-400" />
+                      <div>
+                        <div className="text-white font-medium">{task.title}</div>
+                        <div className="text-xs text-slate-400">{task.course}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                <button
+                  onClick={() => setShowTasks(true)}
+                  className="w-full text-left p-3 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-all border border-dashed border-slate-600"
+                >
+                  <div className="flex items-center gap-3 text-slate-400">
+                    <BookOpen size={16} />
+                    <span>Browse All Tasks</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Timer Display */}
       <div className="relative z-10 flex flex-col items-center">
-        <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center">
-          {/* Progress Ring */}
-          <svg className="absolute inset-0 w-full h-full -rotate-90">
-            <circle
-              cx="50%"
-              cy="50%"
-              r="48%"
-              fill="none"
-              stroke="rgba(255,255,255,0.05)"
-              strokeWidth="4"
-            />
-            <motion.circle
-              cx="50%"
-              cy="50%"
-              r="48%"
-              fill="none"
-              stroke={isBreak ? "#60a5fa" : "#10b981"}
-              strokeWidth="4"
-              strokeDasharray="100"
-              initial={{ strokeDashoffset: 100 }}
-              animate={{ strokeDashoffset: progress }}
-              transition={{ duration: 1, ease: "linear" }}
-              strokeLinecap="round"
-            />
-          </svg>
-
-          <div className="text-center">
-            <motion.span 
-              key={isBreak ? "break" : "work"}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="block text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-2"
-            >
-              {isBreak ? "Break Time" : "Focus Interval"}
-            </motion.span>
-            <h1 className="text-8xl md:text-9xl font-black text-white tabular-nums tracking-tighter italic">
-              {formatTime(seconds)}
-            </h1>
+        {selectedTask ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-8 text-center"
+          >
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 max-w-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <Target size={16} className="text-emerald-400" />
+                <span className="text-emerald-400 font-medium text-sm uppercase tracking-wider">Focusing On</span>
+              </div>
+              <h3 className="text-white font-bold text-lg">{selectedTask.title}</h3>
+              <p className="text-slate-400 text-sm">{selectedTask.course}</p>
+              <button
+                onClick={() => setSelectedTask(null)}
+                className="mt-3 text-xs text-slate-500 hover:text-white transition-colors"
+              >
+                Change Task
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="mb-16 text-center">
+            <h2 className="text-white font-black text-2xl italic mb-2">Ready to Focus?</h2>
+            <p className="text-slate-400">Select a task to begin your focus session</p>
           </div>
-        </div>
+        )}
 
-        {/* Controls */}
-        <div className="mt-12 flex items-center gap-8">
-          <button 
-            onClick={() => {setSeconds(25 * 60); setIsActive(false);}}
-            className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 transition-all"
-          >
-            <RotateCcw size={24} />
-          </button>
-          
-          <button 
-            onClick={() => setIsActive(!isActive)}
-            className={`w-20 h-20 rounded-[2rem] flex items-center justify-center transition-all ${
-              isActive ? 'bg-white/10 text-white' : 'bg-emerald-500 text-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.4)]'
-            }`}
-          >
-            {isActive ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
-          </button>
-
-          <button 
-            onClick={() => setIsBreak(!isBreak)}
-            className="p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 transition-all"
-          >
-            <Coffee size={24} />
-          </button>
-        </div>
+        {/* Timer Component */}
+        <Timer
+          onComplete={handleTimerComplete}
+          onTick={handleTimerTick}
+          className="mb-8"
+        />
       </div>
 
       {/* Footer Settings */}

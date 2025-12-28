@@ -1,0 +1,82 @@
+'use client';
+
+import React from 'react';
+
+interface AuthFallbackProps {
+  children: React.ReactNode;
+}
+
+export default function AuthFallback({ children }: AuthFallbackProps) {
+  // Always return children without any Clerk context
+  return <>{children}</>;
+}
+
+// Fallback components that never import Clerk
+export function FallbackSignedOut({ children }: { children: React.ReactNode }) {
+  // Always show content for signed out state in fallback mode
+  return <>{children}</>;
+}
+
+export function FallbackSignedIn({ children }: { children: React.ReactNode }) {
+  // Always show content for signed in state in fallback mode
+  return <>{children}</>;
+}
+
+export function FallbackSignInButton({ 
+  children, 
+  mode = 'modal',
+  onClick 
+}: { 
+  children: React.ReactNode; 
+  mode?: 'modal' | 'redirect';
+  onClick?: () => void;
+}) {
+  // Just pass through the children without wrapping in a button
+  // The individual button elements will handle their own click events
+  return <>{children}</>;
+}
+
+export function FallbackUserButton({ afterSignOutUrl = '/' }: { afterSignOutUrl?: string }) {
+  return (
+    <button 
+      onClick={() => {
+        // In fallback mode, just redirect
+        window.location.href = afterSignOutUrl;
+      }}
+      className="clerk-fallback-user-button"
+    >
+      User
+    </button>
+  );
+}
+
+// Check if Clerk is fully available and working
+export function isClerkFullyAvailable(): boolean {
+  try {
+    // Check environment variables
+    const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    
+    // Check if keys are valid (not placeholder values)
+    const hasValidKeys = publishableKey && 
+                        secretKey && 
+                        publishableKey !== 'pk_test_your_publishable_key_here' && 
+                        secretKey !== 'sk_test_your_secret_key_here' &&
+                        publishableKey.trim() !== '' &&
+                        secretKey.trim() !== '';
+    
+    // Only return true if keys are valid AND Clerk module works
+    if (!hasValidKeys) {
+      return false;
+    }
+    
+    // Try to access Clerk module to verify it's working
+    // This will throw if the module has issues
+    const clerkModule = require('@clerk/nextjs');
+    return Boolean(clerkModule);
+  } catch (error) {
+    console.warn('[AuthFallback] Clerk not fully available:', error);
+    return false;
+  }
+}
+

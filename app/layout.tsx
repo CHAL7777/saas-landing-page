@@ -1,7 +1,6 @@
-import { ClerkProvider } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from "@/components/ThemeProvider"
-import Navbar from "@/components/Navbar" 
+import { AuthProvider } from "@/contexts/AuthContext"
 import { type Metadata } from 'next'
 import "../styles/globals.css"; // Fixed import path
 
@@ -16,8 +15,15 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Scholarly | AI-Powered Student Tracker',
-  description: 'Master your studies with AI-driven syllabus parsing and focus modes.',
+  title: 'StudyMaster | AI-Powered Student Tracker',
+  description: 'The ultimate workspace for students. Organize assignments, track your GPA, and use AI to simplify complex concepts—all in one place.',
+  manifest: '/manifest.json',
+  themeColor: '#10b981',
+  viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -26,24 +32,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950`}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {/* The Navbar component handles the Sign In/Sign Up buttons internally */}
-            <Navbar />
-            
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
             <main className="min-h-screen">
               {children}
             </main>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   )
 }

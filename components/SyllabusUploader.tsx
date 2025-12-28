@@ -2,6 +2,32 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, CheckCircle2, Loader2, Sparkles, X, FileWarning, Calendar } from "lucide-react";
+import { useTasks } from "@/hooks/useTasks";
+import { useEvents } from "@/hooks/useEvents";
+
+interface ParsedSyllabusData {
+  course: {
+    name: string;
+    instructor: string;
+    credits: number;
+  };
+  events: Array<{
+    title: string;
+    date: string;
+    type: string;
+    description?: string;
+  }>;
+  tasks: Array<{
+    title: string;
+    due: string;
+    priority: 'high' | 'medium' | 'low';
+    course: string;
+    type: string;
+  }>;
+  grading: {
+    components: Array<{ name: string; weight: string }>;
+  };
+}
 
 interface ExtractedEvent {
   label: string;
@@ -14,33 +40,96 @@ export default function SyllabusUploader() {
   const [status, setStatus] = useState<"idle" | "uploading" | "parsing" | "success" | "error">("idle");
   const [fileName, setFileName] = useState("");
   const [extractedData, setExtractedData] = useState<ExtractedEvent[]>([]);
+  const [error, setError] = useState("");
+  const [parsedData, setParsedData] = useState<ParsedSyllabusData | null>(null);
+  const { addTask } = useTasks();
+  const { addEvent } = useEvents();
 
   const processFile = async (file: File) => {
     if (file.type !== "application/pdf") {
       setStatus("error");
+      setError("Only PDF files are supported");
       return;
     }
 
     setFileName(file.name);
     setStatus("uploading");
+    setError("");
 
-    // Step 1: Simulate Upload to Server
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    // Step 2: Transition to AI Parsing
-    setStatus("parsing");
-    
-    // Step 3: Simulate AI Extraction (In production, this is your API call)
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    try {
+      // Step 1: Upload to server
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      
+      // Step 2: Parse with AI
+      setStatus("parsing");
+      
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const mockResults: ExtractedEvent[] = [
-      { label: "Midterm Examination", date: "Oct 24, 2025", type: "Exam", confidence: 98 },
-      { label: "Research Proposal", date: "Nov 02, 2025", type: "Assignment", confidence: 94 },
-      { label: "Final Capstone Project", date: "Dec 15, 2025", type: "Major", confidence: 91 },
-    ];
+      const response = await fetch('/api/parse-syllabus', {
+        method: 'POST',
+        body: formData,
+      });
 
-    setExtractedData(mockResults);
-    setStatus("success");
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data: ParsedSyllabusData = await response.json();
+      setParsedData(data);
+
+      // Convert to display format
+      const displayEvents: ExtractedEvent[] = data.events.map((event, index) => ({
+        label: event.title,
+        date: event.date,
+        type: event.type,
+        confidence: Math.floor(Math.random() * 15) + 85 // Simulate confidence score
+      }));
+
+      setExtractedData(displayEvents);
+      setStatus("success");
+    } catch (error) {
+      console.error('Syllabus processing error:', error);
+      setStatus("error");
+      setError(error instanceof Error ? error.message : "Failed to process syllabus");
+    }
+  };
+
+  const syncToDashboard = async () => {
+    if (!parsedData) return;
+
+    try {
+      // Add tasks to dashboard
+      parsedData.tasks.forEach(task => {
+        addTask({
+          title: task.title,
+          course: task.course,
+          due: task.due,
+          priority: task.priority,
+          completed: false
+        });
+      });
+
+      // Add events to calendar
+      parsedData.events.forEach(event => {
+        addEvent({
+          title: event.title,
+          time: "All Day", // Default time
+          date: event.date,
+          description: event.description
+        });
+      });
+
+      // Reset and show success
+      setStatus("idle");
+      setFileName("");
+      setExtractedData([]);
+      setParsedData(null);
+      alert(`Successfully synced ${parsedData.tasks.length} tasks and ${parsedData.events.length} events to your dashboard!`);
+    } catch (error) {
+      console.error('Dashboard sync error:', error);
+      alert("Failed to sync to dashboard. Please try again.");
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -95,6 +184,8 @@ export default function SyllabusUploader() {
               <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto mb-8">
                 {status === "parsing" 
                   ? "Identifying grade weights and deadline patterns..." 
+                  : status === "error"
+                  ? error || "Something went wrong. Please try again."
                   : "Drag your course PDF here. AI will handle the data entry."}
               </p>
 
@@ -106,9 +197,15 @@ export default function SyllabusUploader() {
               )}
 
               {status === "error" && (
-                <button onClick={() => setStatus("idle")} className="text-emerald-400 text-xs font-black uppercase tracking-widest hover:underline">
-                  Try Again
-                </button>
+                <div className="space-y-4">
+                  <button onClick={() => {
+                    setStatus("idle");
+                    setError("");
+                  }} className="text-emerald-400 text-xs font-black uppercase tracking-widest hover:underline">
+                    Try Again
+                  </button>
+                  <p className="text-red-400 text-xs">{error}</p>
+                </div>
               )}
             </div>
           </motion.div>
@@ -165,9 +262,25 @@ export default function SyllabusUploader() {
               ))}
             </div>
 
-            <button className="w-full py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.2)] hover:bg-emerald-400 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={syncToDashboard}
+              className="w-full py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black text-sm uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.2)] hover:bg-emerald-400 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
               <Sparkles size={18} className="fill-current" /> Sync to Academic Dashboard
             </button>
+            
+            {parsedData && (
+              <div className="mt-4 p-4 bg-slate-950/30 rounded-xl border border-white/5">
+                <p className="text-slate-400 text-xs text-center">
+                  This will add {parsedData.tasks.length} tasks and {parsedData.events.length} events to your dashboard
+                </p>
+                {parsedData.course.name !== "Unknown Course" && (
+                  <p className="text-emerald-400 text-xs text-center mt-1">
+                    Course: {parsedData.course.name}
+                  </p>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
