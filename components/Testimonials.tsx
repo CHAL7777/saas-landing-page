@@ -3,26 +3,34 @@ import { Quote, CheckCircle2, Star } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import React from "react";
 
-const testimonials = [
+interface Testimonial {
+  quote: string;
+  author: string;
+  role: string;
+  initials: string;
+  stars: number;
+}
+
+const studentTestimonials: Testimonial[] = [
   {
-    quote: "This platform saved us over 20 hours a week on project management alone. It's a total game changer for our engineering team.",
+    quote: "I used to spend 5 hours a week just manually entering deadlines. Scholarly did it in seconds by scanning my syllabus. My GPA has never been higher.",
     author: "Sarah Chen",
-    role: "CTO at TechFlow",
+    role: "Pre-Med at Stanford",
     initials: "SC",
     stars: 5
   },
   {
-    quote: "The interface is so intuitive that our whole team was onboarded in less than a day. The Emerald UI is beautiful and fast.",
+    quote: "The AI study guide feature is terrifyingly good. It turned a 200-page textbook into a 10-page master summary that actually made sense.",
     author: "Karl .E",
-    role: "Director of Ops",
+    role: "Law Student, Oxford",
     initials: "KE",
     stars: 5
   },
   {
-    quote: "The best ROI we've seen from any SaaS tool this year. The automation features paid for themselves in month one.",
+    quote: "Finally, a planner that doesn't feel like a chore. The Obsidian theme keeps me focused during late-night study sessions without eye strain.",
     author: "Gudina W.",
-    role: "Founder of Scaleup",
-    initials: "ER",
+    role: "CS Major at MIT",
+    initials: "GW",
     stars: 5
   }
 ];
@@ -40,33 +48,35 @@ export default function Testimonials() {
             whileInView={{ opacity: 1, scale: 1 }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black tracking-widest uppercase mb-6"
           >
-            <Star size={12} className="fill-current" /> Trust & Reliability
+            <Star size={12} className="fill-current" /> Peer Reviews
           </motion.div>
           <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-tight">
-            Loved by the world's <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">best builders.</span>
+            Trusted by the <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Dean's List.</span>
           </h2>
+          <p className="text-slate-400 text-lg max-w-xl mx-auto">
+            Join 50,000+ students from 1,200+ universities worldwide.
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((t, i) => (
+          {studentTestimonials.map((t, i) => (
             <TestimonialCard key={i} t={t} index={i} />
           ))}
         </div>
         
-        {/* Simplified "Verified" footer */}
-        <div className="mt-16 flex justify-center items-center gap-8 opacity-30 grayscale contrast-125">
-             <span className="text-white font-black text-xl italic tracking-tighter">TRUSTPILOT</span>
-             <span className="text-white font-black text-xl italic tracking-tighter">G2 CROWD</span>
-             <span className="text-white font-black text-xl italic tracking-tighter">CAPTERRA</span>
+        {/* Academic Proof Footer */}
+        <div className="mt-20 flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale brightness-200">
+             <span className="text-white font-black text-xs tracking-[0.3em] uppercase">Canvas Verified</span>
+             <span className="text-white font-black text-xs tracking-[0.3em] uppercase">Blackboard Sync</span>
+             <span className="text-white font-black text-xs tracking-[0.3em] uppercase">Google Classroom</span>
         </div>
       </div>
     </section>
   );
 }
 
-function TestimonialCard({ t, index }: { t: typeof testimonials[0], index: number }) {
-  // Mouse tracking for subtle card tilt
+function TestimonialCard({ t, index }: { t: Testimonial, index: number }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const mouseXSpring = useSpring(x);
@@ -76,19 +86,10 @@ function TestimonialCard({ t, index }: { t: typeof testimonials[0], index: numbe
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
+    const xPct = (e.clientX - rect.left) / rect.width - 0.5;
+    const yPct = (e.clientY - rect.top) / rect.height - 0.5;
     x.set(xPct);
     y.set(yPct);
-  }
-
-  function handleMouseLeave() {
-    x.set(0);
-    y.set(0);
   }
 
   return (
@@ -97,7 +98,7 @@ function TestimonialCard({ t, index }: { t: typeof testimonials[0], index: numbe
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
       onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      onMouseLeave={() => { x.set(0); y.set(0); }}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       className="group relative bg-slate-900/40 border border-white/5 p-8 rounded-[2rem] transition-colors duration-500 hover:border-emerald-500/40 backdrop-blur-md"
     >
@@ -111,21 +112,21 @@ function TestimonialCard({ t, index }: { t: typeof testimonials[0], index: numbe
         ))}
       </div>
 
-      <p className="text-slate-300 text-lg leading-relaxed mb-10 relative z-10 font-medium">
+      <p className="text-slate-300 text-lg leading-relaxed mb-10 relative z-10 italic">
         "{t.quote}"
       </p>
 
       <div className="flex items-center justify-between border-t border-white/5 pt-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-sm group-hover:scale-110 transition-transform shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-sm shadow-lg group-hover:shadow-emerald-500/20 transition-all">
             {t.initials}
           </div>
           <div>
             <div className="flex items-center gap-1.5">
                 <h4 className="font-bold text-white text-sm tracking-tight">{t.author}</h4>
-                <CheckCircle2 size={14} className="text-emerald-500 fill-emerald-500/10" />
+                <CheckCircle2 size={14} className="text-emerald-500" />
             </div>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+            <p className="text-emerald-400/60 text-[10px] font-black uppercase tracking-widest">
               {t.role}
             </p>
           </div>

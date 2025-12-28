@@ -1,34 +1,34 @@
 "use client";
 import { useState } from "react";
-import { Check, Zap, Building2, Rocket, Crown } from "lucide-react";
+import { Check, Zap, GraduationCap, School, Sparkles, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const plans = [
   {
-    name: "Starter",
-    icon: <Rocket size={20} />,
+    name: "Scholar",
+    icon: <GraduationCap size={20} />,
     price: { monthly: 0, yearly: 0 },
-    description: "Perfect for side projects and experiments.",
-    features: ["Up to 3 projects", "Basic analytics", "Community support", "1GB bandwidth"],
+    description: "Essential tools for the organized student.",
+    features: ["5 Courses", "AI Summary (10/mo)", "Canvas/LMS Sync", "Mobile App access"],
     cta: "Start for Free",
     highlighted: false,
   },
   {
-    name: "Pro",
-    icon: <Zap size={20} />,
-    price: { monthly: 29, yearly: 24 }, // $24 * 12 = $288
-    description: "For professional builders and growing teams.",
-    features: ["Unlimited projects", "Advanced AI tools", "Priority email support", "Custom domains", "50GB bandwidth", "Advanced Security"],
-    cta: "Get Started Pro",
+    name: "Academic Pro",
+    icon: <Sparkles size={20} />,
+    price: { monthly: 9, yearly: 7 }, 
+    description: "Ultimate power for high achievers.",
+    features: ["Unlimited Courses", "Unlimited AI Tutoring", "Priority LMS Sync", "Custom Study Templates", "Exam Predictor AI", "Dark Mode Themes"],
+    cta: "Go Pro",
     highlighted: true,
   },
   {
-    name: "Enterprise",
-    icon: <Building2 size={20} />,
-    price: { monthly: 99, yearly: 89 },
-    description: "Global scale with advanced governance.",
-    features: ["Custom contracts", "Dedicated manager", "SSO & Security", "24/7 Phone support", "Unlimited bandwidth", "White-labeling"],
-    cta: "Contact Sales",
+    name: "Campus",
+    icon: <School size={20} />,
+    price: { monthly: 49, yearly: 39 },
+    description: "For student orgs and study groups.",
+    features: ["Up to 20 Members", "Shared Study Boards", "Group Task Tracking", "Resource Library", "Team Analytics", "Priority Support"],
+    cta: "Contact for Campus",
     highlighted: false,
   },
 ];
@@ -48,13 +48,13 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black tracking-widest uppercase mb-6"
           >
-            <Crown size={12} /> Pricing Plans
+            <Crown size={12} /> Student Plans
           </motion.div>
           <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tighter leading-tight">
-            Plans for every <span className="text-emerald-400 text-glow">stage.</span>
+            Invest in your <span className="text-emerald-400 text-glow">future.</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-            From solo founders to global enterprises, our infrastructure scales with your ambition.
+            Special pricing for students. Verified .edu accounts get an extra <span className="text-white font-bold">3 months free</span> on yearly plans.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export default function Pricing() {
           <div className="flex items-center gap-2">
             <span className={`text-sm font-bold transition-colors ${isYearly ? 'text-white' : 'text-slate-500'}`}>Yearly</span>
             <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-tighter">
-              Save 20%
+              Best Value
             </span>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function Pricing() {
             >
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 px-6 py-1.5 rounded-full text-[10px] font-black tracking-[0.2em] uppercase shadow-xl">
-                  Most Popular
+                  Recommended
                 </div>
               )}
               
@@ -126,12 +126,9 @@ export default function Pricing() {
                     </span>
                   </motion.div>
                 </AnimatePresence>
-                {isYearly && plan.price.monthly > 0 && (
-                   <p className="text-[10px] text-emerald-500/60 font-bold mt-1 uppercase tracking-widest">Billed annually</p>
-                )}
               </div>
 
-              <div className="flex-grow space-y-4 mb-10">
+              <div className="flex-grow space-y-4 mb-10 text-left">
                 {plan.features.map((feature, idx) => (
                   <div key={idx} className="flex items-center gap-3 text-slate-300 text-sm">
                     <Check size={16} className={`${plan.highlighted ? 'text-emerald-400' : 'text-slate-600'}`} />
@@ -146,26 +143,11 @@ export default function Pricing() {
                 : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
               }`}>
                 <span className="relative z-10">{plan.cta}</span>
-                {plan.highlighted && (
-                  <motion.div 
-                    className="absolute inset-0 bg-white/20 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"
-                    initial={false}
-                  />
-                )}
               </button>
             </motion.div>
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        .text-glow {
-          text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-        }
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </section>
   );
 }

@@ -1,31 +1,28 @@
 "use client";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { Share2, Target, Cpu, CheckCircle2, Zap, Github, Slack } from "lucide-react";
+import { Import, CalendarCheck, Sparkles, CheckCircle2, BookOpen, GraduationCap } from "lucide-react";
 import { useRef } from "react";
 
 const steps = [
   {
     number: "01",
-    title: "Connect your workspace",
-    description: "Sync your existing tools like Slack, GitHub, and Jira in just a few clicks using our secure API bridge.",
-    icon: <Share2 className="text-emerald-400" size={24} />,
-    color: "emerald",
+    title: "Import your Syllabus",
+    description: "Upload your course documents or sync with Canvas and Google Classroom. We'll automatically extract every deadline.",
+    icon: <Import className="text-emerald-400" size={24} />,
     visual: <VisualOne />
   },
   {
     number: "02",
-    title: "Set your goals",
-    description: "Define your KPIs and milestones. Our system automatically maps out the most efficient path to success.",
-    icon: <Target className="text-emerald-400" size={24} />,
-    color: "emerald",
+    title: "Generate Study Plans",
+    description: "Our AI analyzes exam dates and your personal habits to create a balanced weekly study schedule that prevents burnout.",
+    icon: <CalendarCheck className="text-emerald-400" size={24} />,
     visual: <VisualTwo />
   },
   {
     number: "03",
-    title: "Automate everything",
-    description: "Our AI-driven engine handles the busy work, deployments, and scaling while you focus on strategy.",
-    icon: <Cpu className="text-emerald-400" size={24} />,
-    color: "emerald",
+    title: "Learn with AI Help",
+    description: "Stuck on a concept? Use the built-in AI assistant to summarize readings and generate practice quizzes instantly.",
+    icon: <Sparkles className="text-emerald-400" size={24} />,
     visual: <VisualThree />
   }
 ];
@@ -41,7 +38,7 @@ export default function HowItWorks() {
 
   return (
     <section ref={containerRef} id="how-it-works" className="py-32 bg-[#020617] relative">
-      {/* 1. Progress Line with Glow */}
+      {/* Scroll-linked Progress Line */}
       <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-white/5 hidden md:block">
         <motion.div 
           style={{ scaleY, originY: 0 }}
@@ -55,10 +52,10 @@ export default function HowItWorks() {
             initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
             className="text-xs font-black uppercase tracking-[0.4em] text-emerald-500 mb-4"
           >
-            The Workflow
+            Your Academic Engine
           </motion.h2>
           <h3 className="text-4xl md:text-6xl font-black text-white tracking-tighter">
-            Ship faster than <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">humanly possible.</span>
+            Master your semester <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">on autopilot.</span>
           </h3>
         </div>
 
@@ -72,7 +69,6 @@ export default function HowItWorks() {
               transition={{ duration: 0.8 }}
               className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-16 lg:gap-32`}
             >
-              {/* Text Content */}
               <div className="flex-1 space-y-8">
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase">
@@ -85,7 +81,7 @@ export default function HowItWorks() {
                 </div>
                 
                 <ul className="space-y-3">
-                  {['One-click setup', 'Real-time sync', 'End-to-end encryption'].map((item, idx) => (
+                  {['Canvas/LMS Sync', 'Smart Prioritization', 'AI Summaries'].map((item, idx) => (
                     <li key={idx} className="flex items-center gap-3 text-sm text-slate-300">
                       <CheckCircle2 size={16} className="text-emerald-500" /> {item}
                     </li>
@@ -108,52 +104,63 @@ export default function HowItWorks() {
   );
 }
 
-// --- Micro-Visual Components for each step ---
+// --- Student-Focused Visuals ---
 
 function VisualOne() {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-[#030712] relative overflow-hidden">
-      <div className="flex items-center gap-8 z-10">
-        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl shadow-xl"><Github className="text-white" size={32} /></div>
-        <div className="relative flex items-center">
-            <div className="w-24 h-[2px] bg-emerald-500/30 overflow-hidden">
-                <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ duration: 2, repeat: Infinity }} className="h-full w-1/2 bg-emerald-400" />
-            </div>
-            <Zap className="absolute left-1/2 -translate-x-1/2 text-emerald-400 fill-emerald-400" size={20} />
-        </div>
-        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl shadow-xl"><Slack className="text-white" size={32} /></div>
+    <div className="w-full h-full flex flex-col items-center justify-center bg-[#030712] p-8">
+      <div className="w-full max-w-[200px] space-y-3">
+        {[1, 2, 3].map((i) => (
+          <motion.div 
+            key={i}
+            initial={{ x: -20, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            transition={{ delay: i * 0.2 }}
+            className="h-10 bg-white/5 border border-white/10 rounded-lg flex items-center px-4 gap-3"
+          >
+            <div className="w-4 h-4 rounded bg-emerald-500/20 border border-emerald-500/40" />
+            <div className="h-2 w-24 bg-slate-700 rounded-full" />
+          </motion.div>
+        ))}
       </div>
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent" />
+      <div className="mt-6 text-emerald-400 text-[10px] font-mono animate-pulse uppercase tracking-widest">
+        Syncing_Syllabus_Data...
+      </div>
     </div>
   );
 }
 
 function VisualTwo() {
-    return (
-      <div className="w-full h-full p-8 bg-[#030712] flex flex-col justify-end">
-        <div className="flex items-end gap-2 h-32">
-            {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
-                <motion.div 
-                    key={i} 
-                    initial={{ height: 0 }} 
-                    whileInView={{ height: `${h}%` }} 
-                    className="flex-1 bg-emerald-500/20 border-t-2 border-emerald-400 rounded-t-sm" 
-                />
-            ))}
-        </div>
+  return (
+    <div className="w-full h-full p-6 bg-[#030712] flex flex-col">
+      <div className="flex justify-between mb-4">
+        <div className="h-4 w-20 bg-emerald-500/20 rounded-full border border-emerald-500/30" />
+        <div className="h-4 w-12 bg-white/5 rounded-full" />
       </div>
-    );
+      <div className="grid grid-cols-7 gap-2 flex-grow">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: i * 0.05 }}
+            className={`rounded-md border border-white/5 ${i === 8 ? 'bg-emerald-500/40 border-emerald-400' : 'bg-white/5'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function VisualThree() {
-    return (
-      <div className="w-full h-full bg-[#030712] flex flex-col p-6 font-mono text-[10px] text-emerald-500/50">
-        <div className="flex-1 space-y-2 border border-white/5 rounded-lg p-4 bg-black/20">
-            <p>{">"} initiating_auto_scale...</p>
-            <p className="text-emerald-400">{">"} instance_01: healthy</p>
-            <p className="text-emerald-400">{">"} instance_02: healthy</p>
-            <p className="text-white animate-pulse">{">"} monitoring traffic patterns...</p>
-        </div>
+  return (
+    <div className="w-full h-full bg-[#030712] p-6 flex flex-col gap-4">
+      <div className="self-start bg-white/5 border border-white/10 rounded-2xl rounded-bl-none p-3 max-w-[80%]">
+        <p className="text-[10px] text-slate-400">Explain Quantum Entanglement like I'm 5.</p>
       </div>
-    );
+      <div className="self-end bg-emerald-500/10 border border-emerald-500/30 rounded-2xl rounded-br-none p-3 max-w-[80%]">
+        <p className="text-[10px] text-emerald-400">Imagine you have two magic coins. When you flip one, the other always shows the same result, no matter how far away it is...</p>
+      </div>
+    </div>
+  );
 }

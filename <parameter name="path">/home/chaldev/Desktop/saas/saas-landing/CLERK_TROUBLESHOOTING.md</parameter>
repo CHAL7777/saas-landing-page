@@ -1,0 +1,92 @@
+<parameter name="content"># Clerk Authentication Troubleshooting Guide
+
+## Issues Resolved:
+✅ Created proper .env.local template
+✅ Updated middleware with debugging
+
+## Manual Steps Required:
+
+### 1. **System Clock Synchronization**
+Run these commands to fix the clock skew issue:
+```bash
+# Check current time
+date
+
+# Sync system time (Ubuntu/Debian)
+sudo ntpdate -s time.nist.gov
+
+# Or if using systemd-timesyncd
+sudo systemctl restart systemd-timesyncd
+sudo timedatectl status
+```
+
+### 2. **Clerk Keys Configuration**
+1. Go to https://dashboard.clerk.com
+2. Select your application
+3. Navigate to Configure → API Keys
+4. Copy your keys and update `.env.local`:
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (starts with `pk_`)
+   - `CLERK_SECRET_KEY` (starts with `sk_`)
+
+### 3. **Verify Middleware Configuration**
+The updated middleware now includes:
+- Proper route protection
+- Development debugging
+- Error logging for authentication issues
+
+### 4. **Test Authentication Flow**
+1. Start your development server: `npm run dev`
+2. Check browser console for debug logs
+3. Try accessing `/dashboard` (should redirect to sign-in)
+4. Test sign-in/sign-up flow
+
+### 5. **Common Solutions**
+
+#### JWT Expiration Issues:
+- Ensure your system clock is accurate
+- Check token expiration settings in Clerk dashboard
+- Clear browser cookies and try again
+
+#### Infinite Redirect Loop:
+- Verify publishable and secret keys match
+- Check redirect URLs in Clerk dashboard
+- Ensure your domain is configured correctly
+
+#### Clock Skew Detection:
+- Sync system time as shown above
+- Check timezone settings: `timedatectl`
+- Restart your development server
+
+### 6. **Environment Variables Checklist**
+Ensure these are set in `.env.local`:
+- ✅ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+- ✅ CLERK_SECRET_KEY
+- ✅ NEXT_PUBLIC_CLERK_SIGN_IN_URL
+- ✅ NEXT_PUBLIC_CLERK_SIGN_UP_URL
+- ✅ NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
+- ✅ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
+
+### 7. **Next Steps**
+1. Update your Clerk keys in `.env.local`
+2. Run the clock synchronization commands
+3. Test the authentication flow
+4. Check browser console for any remaining errors
+
+### 8. **Debug Commands**
+```bash
+# Check environment variables
+printenv | grep CLERK
+
+# Test middleware
+curl -I http://localhost:3000/dashboard
+
+# Check Clerk connection
+curl -H "Authorization: Bearer YOUR_SECRET_KEY" \
+  https://api.clerk.com/v1/users
+```
+
+## Support
+If issues persist, check:
+- Clerk dashboard for error logs
+- Browser developer console
+- Next.js console for middleware logs</parameter>

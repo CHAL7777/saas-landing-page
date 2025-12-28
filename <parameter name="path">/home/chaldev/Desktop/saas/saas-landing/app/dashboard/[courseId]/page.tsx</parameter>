@@ -1,0 +1,28 @@
+<parameter name="content">import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+
+export default async function CoursePage({ 
+  params 
+}: { 
+  params: { courseId: string } 
+}) {
+  const { userId } = auth()
+  
+  if (!userId) {
+    redirect('/sign-in')
+  }
+
+  // In Next.js 13+ App Router, params is not a Promise for server components
+  const { courseId } = params
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">Course Dashboard</h1>
+          <p className="text-slate-400">Course ID: {courseId}</p>
+          <p className="text-slate-400 mt-2">Coming soon...</p>
+        </div>
+    </div>
+  )
+}</parameter>
