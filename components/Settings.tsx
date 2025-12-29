@@ -17,7 +17,15 @@ import {
   GraduationCap
 } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
-import { useSemester } from "@/hooks/useSemester";
+import { useSemester, SemesterInfo } from "@/hooks/useSemester";
+
+// Empty semester constant
+const EMPTY_SEMESTER: SemesterInfo = {
+  term: "",
+  year: "",
+  credits: 0,
+  updatedAt: new Date(),
+};
 
 interface SettingsProps {
   isOpen: boolean;
@@ -45,7 +53,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   } = useSemester();
   
   const [localSettings, setLocalSettings] = useState(settings);
-  const [localSemester, setLocalSemester] = useState(semester);
+  const [localSemester, setLocalSemester] = useState(semester || EMPTY_SEMESTER);
 
   const handleSave = () => {
     updateSettings(localSettings);
@@ -320,10 +328,132 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                 </div>
               </div>
 
+              {/* Dashboard Overview Settings */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Monitor size={18} />
+                  Dashboard Overview
+                </h3>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-white">Semester Overview</p>
+                      <p className="text-sm text-slate-400">Show semester information and GPA display</p>
+                    </div>
+                    <button
+                      onClick={() => setLocalSettings(prev => ({ ...prev, showSemesterOverview: !prev.showSemesterOverview }))}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.showSemesterOverview ? 'bg-emerald-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.showSemesterOverview ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-white">Course Cards</p>
+                      <p className="text-sm text-slate-400">Display course progress and upcoming deadlines</p>
+                    </div>
+                    <button
+                      onClick={() => setLocalSettings(prev => ({ ...prev, showCourseCards: !prev.showCourseCards }))}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.showCourseCards ? 'bg-emerald-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.showCourseCards ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-white">Timeline Preview</p>
+                      <p className="text-sm text-slate-400">Show weekly sprint timeline and progress</p>
+                    </div>
+                    <button
+                      onClick={() => setLocalSettings(prev => ({ ...prev, showTimelinePreview: !prev.showTimelinePreview }))}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.showTimelinePreview ? 'bg-emerald-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.showTimelinePreview ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-white">Academic Stats</p>
+                      <p className="text-sm text-slate-400">Display GPA, study streak, and task completion stats</p>
+                    </div>
+                    <button
+                      onClick={() => setLocalSettings(prev => ({ ...prev, showAcademicStats: !prev.showAcademicStats }))}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.showAcademicStats ? 'bg-emerald-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.showAcademicStats ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div>
+                      <p className="font-medium text-white">Quick Focus Timer</p>
+                      <p className="text-sm text-slate-400">Show Pomodoro timer and focus session controls</p>
+                    </div>
+                    <button
+                      onClick={() => setLocalSettings(prev => ({ ...prev, showQuickFocus: !prev.showQuickFocus }))}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.showQuickFocus ? 'bg-emerald-500' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.showQuickFocus ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="font-medium text-white mb-2">Timeline Section Title</p>
+                        <p className="text-sm text-slate-400 mb-3">Customize the name of your timeline section</p>
+                        <select
+                          value={localSettings.timelineTitle}
+                          onChange={(e) => setLocalSettings(prev => ({ ...prev, timelineTitle: e.target.value }))}
+                          className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        >
+                          <option value="Weekly Sprint">Weekly Sprint</option>
+                          <option value="Study Plan">Study Plan</option>
+                          <option value="Focus Week">Focus Week</option>
+                          <option value="Learning Timeline">Learning Timeline</option>
+                          <option value="Progress Tracker">Progress Tracker</option>
+                          <option value="Academic Calendar">Academic Calendar</option>
+                          <option value="Weekly Goals">Weekly Goals</option>
+                        </select>
+                      </div>
+                      <div className="p-3 bg-slate-800/50 rounded-lg border border-white/5">
+                        <p className="text-xs text-slate-400">
+                          <strong>Preview:</strong> <span className="text-emerald-400">{localSettings.timelineTitle}</span> will appear in your dashboard
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Auto-save Settings */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Data & Sync</h3>
-                
+
                 <div className="flex items-center justify-between p-4 bg-white/[0.02] rounded-xl border border-white/5">
                   <div>
                     <p className="font-medium text-white">Auto-save Changes</p>

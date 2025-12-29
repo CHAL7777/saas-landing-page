@@ -31,10 +31,6 @@ export default function HomePage() {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
-            <Link href="/dashboard" className="px-4 py-2 text-white hover:text-emerald-400 transition-colors">
-              Dashboard
-            </Link>
-            
             <div className="flex items-center gap-3">
               <Link href="/sign-in" className="px-6 py-2 bg-emerald-500 text-slate-950 rounded-xl font-bold hover:bg-emerald-400 transition-all">
                 Sign In
@@ -55,10 +51,6 @@ export default function HomePage() {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-[#020617] border-t border-emerald-500/10">
             <div className="px-6 py-4 space-y-4">
-              <Link href="/dashboard" className="block py-2 text-white hover:text-emerald-400 transition-colors">
-                Dashboard
-              </Link>
-              
               <div className="space-y-2 pt-4 border-t border-white/10">
                 <Link href="/sign-in" className="block w-full bg-emerald-500 text-slate-950 py-3 rounded-xl font-bold text-center hover:bg-emerald-400 transition-all">
                   Sign In

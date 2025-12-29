@@ -1,4 +1,4 @@
-// Data types for the customizable dashboard
+<parameter name="content">// Data types for the customizable dashboard
 
 export interface Course {
   id: string;
@@ -95,8 +95,6 @@ export interface DashboardSettings {
   showTimelinePreview: boolean;
   showAcademicStats: boolean;
   showQuickFocus: boolean;
-  // Timeline customization
-  timelineTitle: string;
   updatedAt: Date;
 }
 
@@ -276,7 +274,5 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   showTimelinePreview: true,
   showAcademicStats: true,
   showQuickFocus: true,
-  // Timeline customization
-  timelineTitle: 'Weekly Sprint',
   updatedAt: new Date(),
-};
+};</parameter>

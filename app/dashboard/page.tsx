@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { 
@@ -54,13 +55,6 @@ export default function DashboardPage() {
   const { reminders } = useReminders();
   useAutoReminders(); // Initialize auto-reminders
 
-  // Redirect to sign-in if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/sign-in');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
   // Show loading while checking authentication
   if (isLoading) {
     return (
@@ -108,7 +102,7 @@ export default function DashboardPage() {
               <p className="text-slate-400 text-sm">Welcome back{user ? `, ${user.name}` : ''}! Ready to crush your goals?</p>
             </div>
             <div className="flex items-center gap-4">
-              <a 
+              <Link 
                 href="/"
                 className="flex items-center gap-2 px-4 py-2 bg-white/5 text-slate-400 border border-white/10 rounded-xl hover:text-white hover:bg-white/10 transition-all"
               >
@@ -116,7 +110,7 @@ export default function DashboardPage() {
                   <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
                 Back to Home
-              </a>
+              </Link>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
                 <input

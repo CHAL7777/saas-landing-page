@@ -1,0 +1,39 @@
+<parameter name="content"># Dynamic Course Management Implementation
+
+## Current Status
+- [x] Analyze DashboardOverview component structure
+- [x] Review Settings component and useSettings hook
+- [x] Examine DashboardSettings type definition
+- [x] Create implementation plan
+- [x] Extend DashboardSettings type to include overview section visibility toggles
+- [x] Update DEFAULT_SETTINGS with new overview visibility options
+- [x] Add "Dashboard Overview" section to Settings component with toggles
+- [x] Modify DashboardOverview component to conditionally render sections
+
+## New Requirements from User Feedback
+- [ ] Remove hardcoded courses (physics, calculus, chemistry)
+- [ ] Make course system fully customizable
+- [ ] Allow users to add their own courses
+- [ ] Update course data structure to be dynamic
+
+## Tasks to Complete
+- [ ] Add Course interface and course management to types
+- [ ] Create useCourses hook for course management
+- [ ] Add course management UI to Settings component
+- [ ] Update DEFAULT_TASKS to use empty/default courses
+- [ ] Update DashboardOverview to use dynamic course data
+- [ ] Test course management functionality
+
+## Implementation Details
+- Replace hardcoded courses with dynamic course management
+- Users can add, edit, delete courses through Settings
+- Courses stored in localStorage with persistent data
+- Task course assignments update when courses are modified
+- Maintain backward compatibility with existing tasks
+
+## Files to Modify
+- types/dashboard.ts: Add Course interface and course management
+- hooks/useCourses.ts: New hook for course management
+- components/Settings.tsx: Add course management UI
+- components/DashboardOverview.tsx: Update to use dynamic courses
+- components/TaskManager.tsx: Update to work with new course system</parameter>

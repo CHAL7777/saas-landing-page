@@ -1,0 +1,126 @@
+import { useState, useEffect } from 'react';
+import { Course, DEFAULT_COURSES } from '../types/dashboard';
+
+// Interface for data coming from localStorage
+interface CourseFromStorage {
+  id: string;
+  name: string;
+  code: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const COURSES_STORAGE_KEY = 'dashboard-courses';
+
+export const useCourses = () => {
+  const [courses, setCourses] = useState<Course[]>(DEFAULT_COURSES);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load courses from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedCourses = localStorage.getItem(COURSES_STORAGE_KEY);
+      if (storedCourses) {
+      const parsedCourses = JSON.parse(storedCourses).map((course: CourseFromStorage) => ({
+        id: course.id,
+        name: course.name,
+        code: course.code,
+        color: course.color,
+        createdAt: new Date(course.createdAt),
+        updatedAt: new Date(course.updatedAt),
+      }));
+        setCourses(parsedCourses);
+      }
+    } catch (error) {
+      console.error('Error loading courses from localStorage:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Save courses to localStorage whenever courses change
+  useEffect(() => {
+    if (!isLoading) {
+      try {
+        localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(courses));
+      } catch (error) {
+        console.error('Error saving courses to localStorage:', error);
+      }
+    }
+  }, [courses, isLoading]);
+
+  const addCourse = (courseData: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newCourse: Course = {
+      ...courseData,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    setCourses(prev => [...prev, newCourse]);
+  };
+
+  const updateCourse = (id: string, updates: Partial<Omit<Course, 'id' | 'createdAt'>>) => {
+    setCourses(prev => prev.map(course =>
+      course.id === id
+        ? { ...course, ...updates, updatedAt: new Date() }
+        : course
+    ));
+  };
+
+  const deleteCourse = (id: string) => {
+    setCourses(prev => prev.filter(course => course.id !== id));
+  };
+
+  const getCourseById = (id: string) => {
+    return courses.find(course => course.id === id);
+  };
+
+  const getCourseByName = (name: string) => {
+    return courses.find(course => course.name === name);
+  };
+
+  const generateColor = () => {
+    const colors = [
+      '#3B82F6', // blue
+      '#10B981', // emerald
+      '#F59E0B', // amber
+      '#EF4444', // red
+      '#8B5CF6', // violet
+      '#06B6D4', // cyan
+      '#84CC16', // lime
+      '#F97316', // orange
+      '#EC4899', // pink
+      '#6366F1', // indigo
+    ];
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return colors[randomIndex];
+  };
+
+  const getAvailableColors = () => {
+    return [
+      '#3B82F6', // blue
+      '#10B981', // emerald
+      '#F59E0B', // amber
+      '#EF4444', // red
+      '#8B5CF6', // violet
+      '#06B6D4', // cyan
+      '#84CC16', // lime
+      '#F97316', // orange
+      '#EC4899', // pink
+      '#6366F1', // indigo
+    ];
+  };
+
+  return {
+    courses,
+    isLoading,
+    addCourse,
+    updateCourse,
+    deleteCourse,
+    getCourseById,
+    getCourseByName,
+    generateColor,
+    getAvailableColors,
+  };
+};

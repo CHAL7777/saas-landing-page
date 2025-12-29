@@ -33,11 +33,11 @@ export default function Hero() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
             <a 
-              href="/dashboard"
+              href="/sign-in"
               className="px-8 py-4 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-emerald-400 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2"
             >
               <BookOpen size={18} />
-              Enter Dashboard
+              Get Started
             </a>
             <button className="flex items-center gap-2 px-8 py-4 bg-white/5 text-white border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all">
               <Sparkles size={18} /> Take a Tour

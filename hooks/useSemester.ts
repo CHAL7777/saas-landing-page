@@ -11,18 +11,16 @@ export interface SemesterInfo {
   updatedAt: Date;
 }
 
-const DEFAULT_SEMESTER: SemesterInfo = {
-  term: "Spring",
-  year: "2025",
-  credits: 16,
-  startDate: "March 12",
-  endDate: "March 19",
-  gpa: "3.84",
+// Empty state - no default values
+const EMPTY_SEMESTER: SemesterInfo = {
+  term: "",
+  year: "",
+  credits: 0,
   updatedAt: new Date(),
 };
 
 export function useSemester() {
-  const [semester, setSemester] = useLocalStorage<SemesterInfo>("dashboard-semester", DEFAULT_SEMESTER);
+  const [semester, setSemester] = useLocalStorage<SemesterInfo>("dashboard-semester", EMPTY_SEMESTER);
 
   const updateSemester = useCallback((updates: Partial<SemesterInfo>) => {
     setSemester(prev => ({
@@ -41,7 +39,7 @@ export function useSemester() {
   }, [updateSemester]);
 
   const resetSemester = useCallback(() => {
-    setSemester(DEFAULT_SEMESTER);
+    setSemester(EMPTY_SEMESTER);
   }, [setSemester]);
 
   return {

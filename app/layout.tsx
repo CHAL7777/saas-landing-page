@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { AuthProvider } from "@/contexts/AuthContext"
+import ClerkProviderWrapper from "@/components/ClerkProvider"
 import { type Metadata } from 'next'
 import "../styles/globals.css"; // Fixed import path
 
@@ -34,18 +35,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <main className="min-h-screen">
-              {children}
-            </main>
-          </AuthProvider>
-        </ThemeProvider>
+        <ClerkProviderWrapper>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <main className="min-h-screen">
+                {children}
+              </main>
+            </AuthProvider>
+          </ThemeProvider>
+        </ClerkProviderWrapper>
       </body>
     </html>
   )

@@ -1,14 +1,5 @@
 // Data types for the customizable dashboard
 
-export interface Course {
-  id: string;
-  name: string;
-  code: string;
-  color: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface Task {
   id: string;
   title: string;
@@ -95,8 +86,6 @@ export interface DashboardSettings {
   showTimelinePreview: boolean;
   showAcademicStats: boolean;
   showQuickFocus: boolean;
-  // Timeline customization
-  timelineTitle: string;
   updatedAt: Date;
 }
 
@@ -156,12 +145,47 @@ export interface DashboardPreviewProps {
 }
 
 // Default data
-export const DEFAULT_COURSES: Course[] = [
-  // Empty array - users will add their own courses
-];
-
 export const DEFAULT_TASKS: Task[] = [
-  // Empty array - users will add their own tasks
+  {
+    id: '1',
+    title: 'Complete Math Assignment',
+    course: 'Calculus II',
+    due: '2 hours',
+    priority: 'high',
+    completed: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '2',
+    title: 'Read Chapter 5',
+    course: 'Physics',
+    due: '1 day',
+    priority: 'medium',
+    completed: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '3',
+    title: 'Prepare for Quiz',
+    course: 'Chemistry',
+    due: '3 days',
+    priority: 'high',
+    completed: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: '4',
+    title: 'Group Project Meeting',
+    course: 'Computer Science',
+    due: 'Tomorrow',
+    priority: 'low',
+    completed: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 export const DEFAULT_STATS: UserStats = {
@@ -276,7 +300,5 @@ export const DEFAULT_SETTINGS: DashboardSettings = {
   showTimelinePreview: true,
   showAcademicStats: true,
   showQuickFocus: true,
-  // Timeline customization
-  timelineTitle: 'Weekly Sprint',
   updatedAt: new Date(),
 };

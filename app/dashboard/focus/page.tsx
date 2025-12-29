@@ -15,14 +15,8 @@ import {
 import Link from "next/link";
 import Timer from "@/components/Timer";
 import { useAuth } from "@/contexts/AuthContext";
-
-interface Task {
-  id: string;
-  title: string;
-  course: string;
-  priority: 'high' | 'medium' | 'low';
-  completed: boolean;
-}
+import { Task } from "@/types/dashboard";
+import { useTasks } from "@/hooks/useTasks";
 
 export default function FocusMode() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -32,6 +26,9 @@ export default function FocusMode() {
   
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  
+  // Use the task management system instead of hardcoded tasks
+  const { tasks, toggleTaskCompletion } = useTasks();
 
   // Redirect to sign-in if not authenticated
   useEffect(() => {
@@ -40,12 +37,13 @@ export default function FocusMode() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Mock tasks - in real app, these would come from props or context
-  const [tasks] = useState<Task[]>([
-    { id: '1', title: 'Read Chapter 5: Organic Reactions', course: 'Chemistry', priority: 'high', completed: false },
-    { id: '2', title: 'Practice Problems 1-10', course: 'Mathematics', priority: 'medium', completed: false },
-    { id: '3', title: 'Review Lecture Notes', course: 'Physics', priority: 'low', completed: false },
-  ]);
+  // Get incomplete tasks for focus selection, sorted by priority
+  const focusTasks = tasks
+    .filter(task => !task.completed)
+    .sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -66,7 +64,12 @@ export default function FocusMode() {
 
   const handleTimerComplete = (sessionType: 'work' | 'break') => {
     console.log(`${sessionType} session completed!`);
-    // Could show stats, achievements, or next steps here
+    
+    // Auto-complete the task if it's a work session
+    if (sessionType === 'work' && selectedTask) {
+      toggleTaskCompletion(selectedTask.id);
+      setSelectedTask(null);
+    }
   };
 
   const handleTimerTick = (seconds: number, sessionType: 'work' | 'break') => {
@@ -106,28 +109,39 @@ export default function FocusMode() {
             <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 max-w-md">
               <h3 className="text-white font-bold text-center mb-4">Choose Your Focus Task</h3>
               <div className="space-y-3">
-                {tasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Target size={16} className="text-emerald-400" />
-                      <div>
-                        <div className="text-white font-medium">{task.title}</div>
-                        <div className="text-xs text-slate-400">{task.course}</div>
+                {focusTasks.length > 0 ? (
+                  focusTasks.map((task) => (
+                    <button
+                      key={task.id}
+                      onClick={() => setSelectedTask(task)}
+                      className="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Target size={16} className={`${
+                          task.priority === 'high' ? 'text-red-400' : 
+                          task.priority === 'medium' ? 'text-yellow-400' : 'text-blue-400'
+                        }`} />
+                        <div>
+                          <div className="text-white font-medium">{task.title}</div>
+                          <div className="text-xs text-slate-400">{task.course}</div>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Target size={32} className="text-slate-600 mx-auto mb-3" />
+                    <p className="text-slate-400 text-sm mb-2">No tasks available</p>
+                    <p className="text-slate-500 text-xs">Add some tasks to your dashboard to start focusing!</p>
+                  </div>
+                )}
                 <button
-                  onClick={() => setShowTasks(true)}
+                  onClick={() => router.push('/dashboard')}
                   className="w-full text-left p-3 bg-slate-800/50 hover:bg-slate-800 rounded-xl transition-all border border-dashed border-slate-600"
                 >
                   <div className="flex items-center gap-3 text-slate-400">
                     <BookOpen size={16} />
-                    <span>Browse All Tasks</span>
+                    <span>Go to Dashboard</span>
                   </div>
                 </button>
               </div>

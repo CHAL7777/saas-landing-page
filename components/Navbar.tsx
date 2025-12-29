@@ -1,11 +1,10 @@
-
 "use client";
 import { useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Menu, X, GraduationCap, LayoutDashboard } from "lucide-react";
 import { FallbackSignedIn } from "./AuthFallback";
 import Link from "next/link";
-import LogoutSystem from "./LogoutSystem";
+import SimpleLogout from "./SimpleLogout";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +62,7 @@ export default function Navbar() {
                 <LayoutDashboard size={14} />
                 Dashboard
               </Link>
-              <LogoutSystem afterSignOutUrl="/sign-in" />
+              <SimpleLogout />
             </FallbackSignedIn>
           </div>
         </div>
@@ -94,7 +93,7 @@ export default function Navbar() {
                   <Link href="/dashboard" className="block w-full bg-white/10 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-center">
                     Go to Dashboard
                   </Link>
-                  <LogoutSystem afterSignOutUrl="/sign-in" />
+                  <SimpleLogout />
                 </div>
               </FallbackSignedIn>
             </div>
@@ -104,3 +103,4 @@ export default function Navbar() {
     </motion.nav>
   );
 }
+
