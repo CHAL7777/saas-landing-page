@@ -41,8 +41,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   } : null;
 
   const logout = () => {
-    // Use Clerk's built-in sign out functionality
-    // This will be handled by Clerk components that support signOut
+    // Use Clerk's UserButton with signOut functionality
+    // This will redirect to sign in page automatically
     window.location.href = '/sign-in';
   };
 

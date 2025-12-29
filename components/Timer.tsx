@@ -68,24 +68,12 @@ export default function Timer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const notificationPermission = useRef<NotificationPermission>('default');
 
-  // Initialize audio
-  useEffect(() => {
-    // Create a simple beep sound using Web Audio API
-    const createAudioContext = () => {
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        return audioContext;
-      } catch {
-        return null;
-      }
-    };
-
-    const playNotificationSound = () => {
-      if (isMuted || !settings.soundEnabled) return;
-      
-      const audioContext = createAudioContext();
-      if (!audioContext) return;
-
+  // Sound utility function
+  const playNotificationSound = useCallback(() => {
+    if (isMuted || !settings.soundEnabled) return;
+    
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
@@ -98,9 +86,9 @@ export default function Timer({
       
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.5);
-    };
-
-    playNotificationSound();
+    } catch (error) {
+      console.warn('Could not play notification sound:', error);
+    }
   }, [isMuted, settings.soundEnabled]);
 
   // Initialize notifications
@@ -141,6 +129,9 @@ export default function Timer({
     const nextIsBreak = !isBreak;
     const isLongBreak = nextIsBreak && (completedSessions + 1) % settings.sessionsUntilLongBreak === 0;
     
+    // Play notification sound only when session completes
+    playNotificationSound();
+    
     // Update session count
     if (!isBreak) {
       setCompletedSessions(prev => prev + 1);
@@ -169,7 +160,7 @@ export default function Timer({
       ? (isLongBreak ? settings.longBreakDuration : settings.breakDuration)
       : settings.workDuration;
     setSeconds(nextDuration * 60);
-  }, [isBreak, completedSessions, settings, onComplete]);
+  }, [isBreak, completedSessions, settings, onComplete, playNotificationSound]);
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60);

@@ -1,5 +1,5 @@
 "use client";
-import { Twitter, Github, Linkedin, GraduationCap, Globe, Mail, ArrowRight } from "lucide-react";
+import { Twitter, Github, Linkedin, GraduationCap, Globe, Mail, ArrowRight, Send } from "lucide-react";
 import { motion } from "framer-motion";
 
 const links = {
@@ -19,9 +19,9 @@ export default function Footer() {
       <div className="container relative z-10 mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 lg:gap-8 mb-20">
           
-          {/* Brand & Study Pulse Newsletter */}
+          {/* Brand, Community & Newsletter */}
           <div className="col-span-2 lg:col-span-3">
-            <div className="flex items-center gap-3 mb-8 group cursor-pointer w-fit">
+            <div className="flex items-center gap-3 mb-6 group cursor-pointer w-fit">
               <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center transition-all group-hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] group-hover:scale-105">
                 <GraduationCap size={22} className="text-slate-950" />
               </div>
@@ -34,6 +34,29 @@ export default function Footer() {
               Empowering the next generation of high achievers with 
               AI-driven organization and smart study workflows.
             </p>
+
+            {/* Telegram Community Card */}
+            <a 
+              href="https://t.me/scholarlystudy" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group/telegram relative flex items-center gap-4 p-4 mb-8 max-w-sm rounded-2xl bg-[#0088cc]/10 border border-[#0088cc]/20 hover:bg-[#0088cc]/20 transition-all cursor-pointer overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0088cc]/10 to-transparent opacity-0 group-hover/telegram:opacity-100 transition-opacity" />
+              
+              <div className="w-12 h-12 rounded-xl bg-[#0088cc] flex items-center justify-center shadow-lg shadow-[#0088cc]/20 group-hover/telegram:scale-105 transition-transform z-10">
+                <Send size={20} className="text-white ml-[-2px]" />
+              </div>
+              
+              <div className="z-10">
+                <h5 className="text-white font-bold text-sm mb-0.5">Scholarly Study Group</h5>
+                <p className="text-[#38bdf8] text-xs font-semibold tracking-wide uppercase">
+                  Join & Collab with fellow students
+                </p>
+              </div>
+              
+              <ArrowRight size={16} className="ml-auto text-[#0088cc] opacity-50 group-hover/telegram:opacity-100 group-hover/telegram:translate-x-1 transition-all z-10" />
+            </a>
 
             {/* Newsletter Input - The "Study Pulse" */}
             <div className="max-w-md relative group">

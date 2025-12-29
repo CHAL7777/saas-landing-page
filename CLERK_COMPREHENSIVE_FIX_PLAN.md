@@ -1,90 +1,62 @@
 # Clerk Authentication Comprehensive Fix Plan
 
-## Problem Analysis
+## Issues Identified
 
-### 1. Primary Issues Identified
-- **Infinite Redirect Loop**: Clerk instance keys don't match or are missing
-- **Module Not Found Error**: Missing `@clerk/nextjs/dist/esm/client-boundary/controlComponents`
-- **Missing Environment Variables**: No Clerk publishable/secret keys configured
-- **Missing Authentication Pages**: No sign-in/sign-up pages implemented
+### 1. Missing Environment Variables
+- **NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY**: Not configured
+- **CLERK_SECRET_KEY**: Not configured
+- This causes module import errors and JWT token issues
 
-### 2. Error Root Causes
-1. **Environment Variables**: Missing or incorrect Clerk keys in `.env`
-2. **Module Corruption**: Possible corrupted `@clerk/nextjs` installation
-3. **Missing Pages**: No authentication UI components
-4. **Middleware Conflicts**: Improper redirect handling
+### 2. Next.js Metadata Configuration
+- **themeColor** and **viewport** in metadata export should be moved to viewport export
+- Current: `export const metadata: Metadata = { themeColor: '#10b981', viewport: 'width=device-width, initial-scale=1' }`
+- Should be: separate `export const viewport` function
 
-## Comprehensive Solution Plan
+### 3. Clerk Module Import Errors
+- Missing module: `/node_modules/@clerk/nextjs/dist/esm/client-boundary/controlComponents`
+- This suggests corrupted or missing Clerk installation
 
-### Phase 1: Environment & Dependencies Fix
-1. **Clear & Reinstall Dependencies**
-   - Remove `node_modules` and `package-lock.json`
-   - Reinstall `@clerk/nextjs` with correct version
-   - Verify module integrity
+### 4. Authentication Flow Issues
+- **JWT Token Expiration**: Tokens expired with clock skew detection
+- **Infinite Redirect Loops**: `auth.protect()` causing redirects
+- **Improper Logout**: Using `window.location.href` instead of Clerk's signOut
 
-2. **Environment Variables Setup**
-   - Create proper `.env.local` with Clerk keys
-   - Configure redirect URLs
-   - Set up development/production environments
+### 5. Middleware Configuration
+- Current middleware has redirect loop issues
+- Needs better error handling and redirect logic
 
-### Phase 2: Authentication Pages Implementation
-1. **Create Sign-in Page**
-   - Implement Clerk's SignIn component
-   - Configure redirect URLs
-   - Add proper styling
+## Fix Implementation Plan
 
-2. **Create Sign-up Page**
-   - Implement Clerk's SignUp component
-   - Configure redirect URLs
-   - Add proper styling
+### Phase 1: Environment Setup
+1. **Install Clerk Dependencies**: Clean reinstall of @clerk/nextjs
+2. **Configure Environment Variables**: Add proper Clerk keys
+3. **Fix Metadata Configuration**: Move themeColor/viewport to viewport export
 
-### Phase 3: Middleware & Error Handling
-1. **Fix Middleware Logic**
-   - Improve redirect handling
-   - Add proper error boundaries
-   - Implement fallback mechanisms
+### Phase 2: Authentication Fix
+1. **Fix AuthContext**: Use proper Clerk signOut method
+2. **Update Middleware**: Add proper error handling and redirects
+3. **Fix Component Imports**: Ensure all Clerk components work properly
 
-2. **Error Boundary Implementation**
-   - Global error handling
-   - User-friendly error messages
-   - Debug information for development
+### Phase 3: Testing & Validation
+1. **Test Authentication Flow**: Sign in, protected routes, sign out
+2. **Verify No Redirect Loops**: Ensure middleware works correctly
+3. **Check Token Expiration**: Verify JWT handling
 
-### Phase 4: Testing & Verification
-1. **Authentication Flow Testing**
-   - Sign-in process
-   - Sign-up process
-   - Protected route access
-   - Redirect handling
+## Files to Update
+- `.env.local` (create with Clerk keys)
+- `app/layout.tsx` (fix metadata/viewport)
+- `contexts/AuthContext.tsx` (fix logout method)
+- `middleware.ts` (add error handling)
+- `components/ClerkProvider.tsx` (add error boundaries)
 
-2. **Error Monitoring**
-   - Console error checking
-   - Network request monitoring
-   - Authentication state verification
+## Dependencies to Update
+- `@clerk/nextjs`: Reinstall latest version
+- Clear node_modules and package-lock.json
 
-## Files to Create/Update
-
-### New Files
-- `app/sign-in/[[...sign-in]]/page.tsx` - Sign-in page
-- `app/sign-up/[[...sign-up]]/page.tsx` - Sign-up page
-- `.env.local` - Environment variables template
-- `components/AuthErrorBoundary.tsx` - Authentication error boundary
-
-### Files to Update
-- `middleware.ts` - Enhanced authentication logic
-- `app/layout.tsx` - Add error boundaries
-- `package.json` - Verify dependencies
-- `next.config.ts` - Add Clerk configuration
-
-## Implementation Priority
-1. **HIGH**: Environment variables and dependency cleanup
-2. **HIGH**: Authentication pages creation
-3. **MEDIUM**: Middleware improvements
-4. **MEDIUM**: Error boundary implementation
-5. **LOW**: Testing and optimization
-
-## Success Criteria
+## Expected Outcomes
+- No more JWT expiration errors
+- No more clock skew warnings
+- Proper authentication flow
 - No infinite redirect loops
-- Successful sign-in/sign-up flow
-- Proper protected route handling
-- Clean console (no module errors)
-- User-friendly error messages
+- Working sign in/sign out functionality
+- Clean console without metadata warnings

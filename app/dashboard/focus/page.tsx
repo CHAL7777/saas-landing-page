@@ -89,7 +89,9 @@ export default function FocusMode() {
           </div>
           <div>
             <h2 className="text-white font-black italic uppercase tracking-tighter">Deep Focus</h2>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Organic Chemistry II</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+              {selectedTask ? selectedTask.course : "Focus Session"}
+            </p>
           </div>
         </div>
         <Link href="/dashboard" className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 transition-all">

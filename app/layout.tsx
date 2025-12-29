@@ -19,12 +19,16 @@ export const metadata: Metadata = {
   title: 'StudyMaster | AI-Powered Student Tracker',
   description: 'The ultimate workspace for students. Organize assignments, track your GPA, and use AI to simplify complex concepts—all in one place.',
   manifest: '/manifest.json',
-  themeColor: '#10b981',
-  viewport: 'width=device-width, initial-scale=1',
   icons: {
     icon: '/icon.svg',
     apple: '/icon.svg',
   },
+}
+
+export const viewport = {
+  themeColor: '#10b981',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

@@ -1,0 +1,617 @@
+<parameter name="content">"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { 
+  BookOpen, 
+  Calendar, 
+  Target, 
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Star,
+  Plus,
+  Filter,
+  Search,
+  Bell,
+  Settings as SettingsIcon,
+  User,
+  Upload,
+  LogOut,
+  Menu,
+  X
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import DashboardOverview from "@/components/DashboardOverview";
+import DashboardPreview from "@/components/DashboardPreview";
+import StatsEditor from "@/components/StatsEditor";
+import TaskManager from "@/components/TaskManager";
+import EventManager from "@/components/EventManager";
+import StudyPlan from "@/components/StudyPlan";
+import StudyBuddy from "@/components/StudyBuddy";
+import SyllabusUploader from "@/components/SyllabusUploader";
+import SettingsComponent from "@/components/Settings";
+import NotificationCenter from "@/components/NotificationCenter";
+import PWAInstall from "@/components/PWAInstall";
+
+// Enhanced Components
+import { 
+  MobileNavigation, 
+  MobileFAB, 
+  MobileHeader,
+  MobileBottomSheet,
+  ResponsiveGrid
+} from "@/components/MobileNavigation";
+import { 
+  PageLoadingSkeleton,
+  DashboardOverviewSkeleton,
+  TaskListSkeleton,
+  DataLoadingState,
+  EmptyState
+} from "@/components/EnhancedLoadingStates";
+import { 
+  useEnhancedPWA,
+  PWAInstallToast,
+  ConnectionStatusIndicator,
+  UpdateAvailableNotification,
+  NotificationPermissionRequest
+} from "@/hooks/useEnhancedPWA";
+import { 
+  AccessibilitySettingsPanel,
+  HighContrastMode,
+  FocusManager,
+  SkipLinks,
+  useKeyboardNavigation,
+  useScreenReaderAnnouncements,
+  FontSizeController,
+  ColorBlindFilter,
+  useReducedMotion,
+  AccessibleButton,
+  LiveRegion
+} from "@/components/AccessibilityEnhancements";
+
+import { useTasks } from "@/hooks/useTasks";
+import { useEvents } from "@/hooks/useEvents";
+import { useSettings } from "@/hooks/useSettings";
+import { useReminders } from "@/hooks/useReminders";
+import { useAutoReminders } from "@/hooks/useAutoReminders";
+
+interface AccessibilitySettings {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fontSize: "small" | "medium" | "large" | "xl";
+  focusIndicators: boolean;
+  screenReaderOptimized: boolean;
+  voiceNavigation: boolean;
+  colorBlindMode: "none" | "protanopia" | "deuteranopia" | "tritanopia";
+}
+
+export default function EnhancedDashboardPage() {
+  // Core state
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Enhanced state
+  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>({
+    highContrast: false,
+    reducedMotion: false,
+    fontSize: "medium",
+    focusIndicators: true,
+    screenReaderOptimized: false,
+    voiceNavigation: false,
+    colorBlindMode: "none",
+  });
+
+  const [showAccessibilityPanel, setShowAccessibilityPanel] = useState(false);
+  const [showInstallToast, setShowInstallToast] = useState(false);
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
+  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+
+  // Enhanced hooks
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+  const { tasks, getIncompleteTasks, isLoading: tasksLoading } = useTasks();
+  const { events, isLoading: eventsLoading } = useEvents();
+  const { settings } = useSettings();
+  const { reminders } = useReminders();
+  useAutoReminders(); // Initialize auto-reminders
+
+  // Enhanced features
+  const pwaFeatures = useEnhancedPWA();
+  const { announce } = useScreenReaderAnnouncements();
+  const prefersReducedMotion = useReducedMotion();
+
+  // Keyboard navigation
+  useKeyboardNavigation();
+
+  // Initialize loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show notification permission request after a delay
+  useEffect(() => {
+    if (pwaFeatures.notificationPermission === "default") {
+      const timer = setTimeout(() => {
+        setShowNotificationPermission(true);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [pwaFeatures.notificationPermission]);
+
+  // Show install toast if available
+  useEffect(() => {
+    if (pwaFeatures.isInstallable && !pwaFeatures.isInstalled) {
+      setShowInstallToast(true);
+    }
+  }, [pwaFeatures.isInstallable, pwaFeatures.isInstalled]);
+
+  // Show update notification if available
+  useEffect(() => {
+    if (pwaFeatures.updateReady) {
+      setShowUpdateNotification(true);
+    }
+  }, [pwaFeatures.updateReady]);
+
+  // Handle logout
+  const handleLogout = () => {
+    setIsLoggingOut(true);
+    announce("Signing out...");
+    logout();
+  };
+
+  // Get unread notifications count
+  const unreadCount = reminders.filter(r => !r.isRead && !r.isCompleted).length;
+
+  // Navigation tabs
+  const tabs = [
+    { id: "overview", label: "Overview", icon: TrendingUp },
+    { id: "tasks", label: "Tasks", icon: CheckCircle2 },
+    { id: "stats", label: "Stats", icon: Target },
+    { id: "calendar", label: "Calendar", icon: Calendar },
+    { id: "study-plan", label: "Study Plan", icon: BookOpen },
+    { id: "syllabus", label: "Syllabus", icon: Upload },
+    { id: "buddy", label: "Study Buddy", icon: User },
+  ];
+
+  // Handle tab change with accessibility announcements
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const tab = tabs.find(t => t.id === tabId);
+    if (tab) {
+      announce(`Switched to ${tab.label} tab`);
+    }
+  };
+
+  // Handle mobile navigation
+  const handleMobileNavigation = (tabId: string) => {
+    handleTabChange(tabId);
+    announce(`Navigated to ${tabs.find(t => t.id === tabId)?.label}`);
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return <PageLoadingSkeleton title="Loading Dashboard..." />;
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const renderContent = () => {
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+      // Mobile-specific content rendering
+      switch (activeTab) {
+        case "overview":
+          return (
+            <div className="p-4 space-y-6">
+              {isLoading ? (
+                <DashboardOverviewSkeleton />
+              ) : (
+                <>
+                  <DashboardOverview />
+                  <DashboardPreview useRealData={true} />
+                </>
+              )}
+            </div>
+          );
+        case "tasks":
+          return (
+            <div className="p-4">
+              {tasksLoading ? (
+                <TaskListSkeleton />
+              ) : (
+                <TaskManager />
+              )}
+            </div>
+          );
+        case "stats":
+          return <StatsEditor />;
+        case "calendar":
+          return <EventManager />;
+        case "study-plan":
+          return <StudyPlan />;
+        case "syllabus":
+          return (
+            <div className="p-4">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-white mb-2">Syllabus Uploader</h2>
+                <p className="text-slate-400 text-sm">Upload your course syllabus and let AI extract important dates</p>
+              </div>
+              <SyllabusUploader />
+            </div>
+          );
+        case "buddy":
+          return <StudyBuddy />;
+        default:
+          return null;
+      }
+    }
+
+    // Desktop content rendering
+    switch (activeTab) {
+      case "overview":
+        return (
+          <div className="space-y-8">
+            {isLoading ? (
+              <DashboardOverviewSkeleton />
+            ) : (
+              <>
+                <DashboardOverview />
+                <DashboardPreview useRealData={true} />
+                
+                {/* Enhanced Quick Actions */}
+                <ResponsiveGrid minItemWidth="320px">
+                  <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Target className="text-emerald-400" size={20} />
+                      Today's Focus
+                    </h3>
+                    <div className="space-y-3">
+                      {getIncompleteTasks().slice(0, 3).map((task) => (
+                        <div key={task.id} className="flex items-center justify-between p-3 bg-slate-900/30 rounded-xl">
+                          <div>
+                            <p className="font-medium text-sm">{task.title}</p>
+                            <p className="text-xs text-slate-500">{task.course}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            task.priority === "high" ? "bg-red-500/20 text-red-400" :
+                            task.priority === "medium" ? "bg-yellow-500/20 text-yellow-400" :
+                            "bg-blue-500/20 text-blue-400"
+                          }`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                      ))}
+                      {getIncompleteTasks().length === 0 && (
+                        <EmptyState
+                          title="All Caught Up!"
+                          description="No pending tasks. Great job staying on top of everything!"
+                          icon={<CheckCircle2 className="text-emerald-400" size={24} />}
+                        />
+                      )}
+                    </div>
+
+                  <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Calendar className="text-blue-400" size={20} />
+                      Upcoming Events
+                    </h3>
+                    <div className="space-y-3">
+                      {events.slice(0, 3).map((event) => (
+                        <div key={event.id} className="flex items-center justify-between p-3 bg-slate-900/30 rounded-xl">
+                          <div>
+                            <p className="font-medium text-sm">{event.title}</p>
+                            <p className="text-xs text-slate-500">{event.date} at {event.time}</p>
+                          </div>
+                      ))}
+                      {events.length === 0 && (
+                        <EmptyState
+                          title="No Events Scheduled"
+                          description="Your calendar is clear. Add some study sessions or deadlines!"
+                          icon={<Calendar className="text-blue-400" size={24} />}
+                        />
+                      )}
+                    </div>
+                </ResponsiveGrid>
+              </>
+            )}
+          </div>
+        );
+      case "tasks":
+        return <TaskManager />;
+      case "stats":
+        return <StatsEditor />;
+      case "calendar":
+        return <EventManager />;
+      case "study-plan":
+        return <StudyPlan />;
+      case "syllabus":
+        return (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-2xl font-black text-white mb-2">Syllabus Uploader</h2>
+              <p className="text-slate-400">Upload your course syllabus and let AI extract all important dates and assignments</p>
+            </div>
+            <SyllabusUploader />
+          </div>
+        );
+      case "buddy":
+        return <StudyBuddy />;
+      default:
+        return null;
+    }
+  };
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  return (
+    <HighContrastMode enabled={accessibilitySettings.highContrast}>
+      <ColorBlindFilter mode={accessibilitySettings.colorBlindMode}>
+        <FontSizeController size={accessibilitySettings.fontSize}>
+          <div className="min-h-screen bg-[#020617] text-white">
+            <SkipLinks />
+            <LiveRegion>
+              {`Dashboard loaded with ${tabs.length} navigation tabs`}
+            </LiveRegion>
+
+            {/* Desktop Header */}
+            {!isMobile && (
+              <header className="border-b border-white/10 bg-slate-950/50 backdrop-blur-xl sticky top-0 z-50">
+                <div className="container mx-auto px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-2xl font-black text-white">Dashboard</h1>
+                      <p className="text-slate-400 text-sm">
+                        Welcome back{user ? `, ${user.name}` : ''}! Ready to crush your goals?
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
+                        <input
+                          type="text"
+                          placeholder="Search courses, tasks..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 pr-4 py-2 bg-slate-900/50 border border-white/10 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        />
+                      </div>
+                      
+                      <AccessibleButton
+                        onClick={() => setShowNotifications(true)}
+                        variant="ghost"
+                        ariaLabel={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+                      >
+                        <div className="relative">
+                          <Bell size={20} />
+                          {unreadCount > 0 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-bold text-white">{unreadCount}</span>
+                            </div>
+                          )}
+                        </div>
+                      </AccessibleButton>
+
+                      <AccessibleButton
+                        onClick={() => setShowSettings(true)}
+                        variant="ghost"
+                        ariaLabel="Open settings"
+                      >
+                        <SettingsIcon size={20} />
+                      </AccessibleButton>
+
+                      {/* User Menu */}
+                      <div className="flex items-center gap-3 px-3 py-2 bg-slate-900/50 border border-white/10 rounded-xl">
+                        <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                          <User size={16} className="text-emerald-400" />
+                        </div>
+                        <div className="text-sm">
+                          <p className="text-white font-medium">{user?.name || 'User'}</p>
+                          <p className="text-slate-400 text-xs">{user?.email}</p>
+                        </div>
+                        <AccessibleButton
+                          onClick={handleLogout}
+                          disabled={isLoggingOut}
+                          variant="ghost"
+                          ariaLabel="Sign out"
+                          className="p-1 text-slate-400 hover:text-red-400"
+                        >
+                          <LogOut size={16} />
+                        </AccessibleButton>
+                      </div>
+                  </div>
+              </header>
+            )}
+
+            {/* Mobile Header */}
+            {isMobile && (
+              <MobileHeader
+                title="Dashboard"
+                actions={
+                  <>
+                    <AccessibleButton
+                      onClick={() => setShowNotifications(true)}
+                      variant="ghost"
+                      size="sm"
+                      ariaLabel={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
+                    >
+                      <div className="relative">
+                        <Bell size={20} />
+                        {unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-bold text-white">{unreadCount}</span>
+                          </div>
+                        )}
+                      </div>
+                    </AccessibleButton>
+                    <AccessibleButton
+                      onClick={() => setShowAccessibilityPanel(true)}
+                      variant="ghost"
+                      size="sm"
+                      ariaLabel="Accessibility settings"
+                    >
+                      <SettingsIcon size={20} />
+                    </AccessibleButton>
+                  </>
+                }
+              />
+            )}
+
+            {/* Main Content */}
+            <main id="main-content" className={`${!isMobile ? "container mx-auto px-6 py-6" : ""}`}>
+              {/* Desktop Navigation Tabs */}
+              {!isMobile && (
+                <div className="flex items-center gap-2 mb-8 overflow-x-auto">
+                  {tabs.map((tab) => (
+                    <AccessibleButton
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      variant={activeTab === tab.id ? "primary" : "ghost"}
+                      ariaLabel={`${tab.label} tab${activeTab === tab.id ? " (active)" : ""}`}
+                    >
+                      <tab.icon size={18} />
+                      {tab.label}
+                    </AccessibleButton>
+                  ))}
+                </div>
+              )}
+
+              {/* Content with animations */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${activeTab}-${isMobile ? 'mobile' : 'desktop'}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: accessibilitySettings.reducedMotion ? 0 : 0.2 }}
+                >
+                  {renderContent()}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+
+            {/* Mobile Navigation */}
+            {isMobile && (
+              <>
+                <MobileNavigation
+                  activeTab={activeTab}
+                  onTabChange={handleMobileNavigation}
+                  showAddButton={true}
+                  onAddClick={() => setShowAddModal(true)}
+                  showNotifications={true}
+                  notificationCount={unreadCount}
+                  onNotificationClick={() => setShowNotifications(true)}
+                />
+                <MobileFAB onClick={() => setShowAddModal(true)} />
+              </>
+            )}
+
+            {/* Settings Modal */}
+            <SettingsComponent 
+              isOpen={showSettings} 
+              onClose={() => setShowSettings(false)} 
+            />
+
+            {/* Accessibility Panel */}
+            <MobileBottomSheet
+              isOpen={showAccessibilityPanel}
+              onClose={() => setShowAccessibilityPanel(false)}
+              title="Accessibility Settings"
+            >
+              <AccessibilitySettingsPanel
+                settings={accessibilitySettings}
+                onSettingsChange={setAccessibilitySettings}
+              />
+            </MobileBottomSheet>
+
+            {/* Notification Center */}
+            <NotificationCenter 
+              isOpen={showNotifications} 
+              onClose={() => setShowNotifications(false)} 
+            />
+
+            {/* Add Modal for Mobile */}
+            <MobileBottomSheet
+              isOpen={showAddModal}
+              onClose={() => setShowAddModal(false)}
+              title="Quick Actions"
+            >
+              <div className="space-y-3">
+                <AccessibleButton
+                  onClick={() => {
+                    setActiveTab("tasks");
+                    setShowAddModal(false);
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start"
+                >
+                  <Plus size={20} />
+                  Add New Task
+                </AccessibleButton>
+                <AccessibleButton
+                  onClick={() => {
+                    setActiveTab("calendar");
+                    setShowAddModal(false);
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start"
+                >
+                  <Calendar size={20} />
+                  Schedule Event
+                </AccessibleButton>
+                <AccessibleButton
+                  onClick={() => {
+                    router.push("/dashboard/focus");
+                    setShowAddModal(false);
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start"
+                >
+                  <Target size={20} />
+                  Start Focus Session
+                </AccessibleButton>
+              </div>
+            </MobileBottomSheet>
+
+            {/* PWA Components */}
+            <PWAInstall />
+            <ConnectionStatusIndicator isOnline={pwaFeatures.isOnline} />
+            
+            {/* PWA Toasts and Notifications */}
+            <PWAInstallToast
+              onInstall={pwaFeatures.installApp}
+              onDismiss={() => setShowInstallToast(false)}
+              show={showInstallToast}
+            />
+            
+            <UpdateAvailableNotification
+              onUpdate={pwaFeatures.updateApp}
+              show={showUpdateNotification}
+            />
+            
+            <NotificationPermissionRequest
+              onRequest={pwaFeatures.requestNotificationPermission}
+              onDismiss={() => setShowNotificationPermission(false)}
+              show={showNotificationPermission}
+            />
+          </div>
+        </FontSizeController>
+      </ColorBlindFilter>
+    </HighContrastMode>
+  );
+}
+</parameter>

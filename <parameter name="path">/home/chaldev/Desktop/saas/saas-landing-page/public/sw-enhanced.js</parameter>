@@ -1,0 +1,305 @@
+<parameter name="content">// Enhanced Service Worker for StudyMaster PWA
+const CACHE_NAME = 'studymaster-v2.0.0';
+const STATIC_CACHE = 'studymaster-static-v2.0.0';
+const DYNAMIC_CACHE = 'studymaster-dynamic-v2.0.0';
+
+// Resources to cache immediately
+const STATIC_ASSETS = [
+  '/',
+  '/manifest.json',
+  '/icon.svg',
+  '/next.svg',
+  '/vercel.svg',
+  '/window.svg',
+  '/file.svg',
+  '/globe.svg',
+];
+
+// API routes to cache
+const API_ROUTES = [
+  '/api/auth/signout',
+  '/api/parse-syllabus'
+];
+
+// Install event - cache static assets
+self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
+  
+  event.waitUntil(
+    caches.open(STATIC_CACHE)
+      .then((cache) => {
+        console.log('Caching static assets...');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        return self.skipWaiting();
+      })
+  );
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
+  
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        return self.clients.claim();
+      })
+  );
+});
+
+// Fetch event - implement caching strategy
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Handle navigation requests (HTML pages)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/')
+        .then((cachedResponse) => {
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              // Update cache for navigation
+              caches.open(DYNAMIC_CACHE)
+                .then((cache) => {
+                  cache.put('/', networkResponse.clone());
+                });
+              return networkResponse;
+            })
+            .catch(() => {
+              // Return cached version if network fails
+              return cachedResponse || caches.match('/offline.html');
+            });
+          
+          return cachedResponse || fetchPromise;
+        })
+    );
+    return;
+  }
+
+  // Handle API requests
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      caches.match(request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            // Return cached API response
+            return cachedResponse;
+          }
+          
+          return fetch(request)
+            .then((response) => {
+              // Cache successful API responses
+              if (response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(DYNAMIC_CACHE)
+                  .then((cache) => {
+                    cache.put(request, responseClone);
+                  });
+              }
+              return response;
+            });
+        })
+        .catch(() => {
+          // Return offline fallback for API requests
+          return new Response(
+            JSON.stringify({ 
+              error: 'Offline', 
+              message: 'This feature requires an internet connection' 
+            }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+        })
+    );
+    return;
+  }
+
+  // Handle static assets (images, fonts, etc.)
+  if (request.destination === 'image' || request.destination === 'font' || request.destination === 'style' || request.destination === 'script') {
+    event.respondWith(
+      caches.match(request)
+        .then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          
+          return fetch(request)
+            .then((response) => {
+              // Cache static assets
+              if (response.status === 200) {
+                const responseClone = response.clone();
+                caches.open(STATIC_CACHE)
+                  .then((cache) => {
+                    cache.put(request, responseClone);
+                  });
+              }
+              return response;
+            });
+        })
+    );
+    return;
+  }
+
+  // Default strategy - network first, cache fallback
+  event.respondWith(
+    fetch(request)
+      .catch(() => {
+        return caches.match(request);
+      })
+  );
+});
+
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    console.log('Background sync triggered');
+    event.waitUntil(doBackgroundSync());
+  }
+});
+
+async function doBackgroundSync() {
+  try {
+    // Sync any pending data when connection is restored
+    const pendingActions = await getStoredActions();
+    
+    for (const action of pendingActions) {
+      try {
+        await fetch(action.url, {
+          method: action.method,
+          headers: action.headers,
+          body: action.body
+        });
+        await removeStoredAction(action.id);
+      } catch (error) {
+        console.error('Failed to sync action:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+// Store action for later sync
+async function storeAction(action) {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  const actions = await getStoredActions();
+  actions.push({
+    ...action,
+    id: Date.now(),
+    timestamp: new Date().toISOString()
+  });
+  
+  // Store in IndexedDB or localStorage equivalent
+  await cache.put('/pending-actions', new Response(JSON.stringify(actions)));
+}
+
+// Get stored actions
+async function getStoredActions() {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  const response = await cache.match('/pending-actions');
+  return response ? await response.json() : [];
+}
+
+// Remove stored action
+async function removeStoredAction(id) {
+  const cache = await caches.open(DYNAMIC_CACHE);
+  const actions = await getStoredActions();
+  const filteredActions = actions.filter(action => action.id !== id);
+  
+  await cache.put('/pending-actions', new Response(JSON.stringify(filteredActions)));
+}
+
+// Push notification handling
+self.addEventListener('push', (event) => {
+  console.log('Push notification received');
+  
+  const options = {
+    body: event.data ? event.data.text() : 'You have a new study reminder!',
+    icon: '/icon.svg',
+    badge: '/badge.svg',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View',
+        icon: '/view-icon.svg'
+      },
+      {
+        action: 'dismiss',
+        title: 'Dismiss',
+        icon: '/dismiss-icon.svg'
+      }
+    ]
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification('StudyMaster', options)
+  );
+});
+
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification click received');
+  
+  event.notification.close();
+  
+  if (event.action === 'view') {
+    event.waitUntil(
+      clients.openWindow('/dashboard')
+    );
+  }
+});
+
+// Message handling from main thread
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(DYNAMIC_CACHE)
+        .then((cache) => {
+          return cache.addAll(event.data.urls);
+        })
+    );
+  }
+});
+
+// Periodic background sync (experimental)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'study-reminders') {
+    event.waitUntil(checkStudyReminders());
+  }
+});
+
+async function checkStudyReminders() {
+  // Check for upcoming study sessions and send notifications
+  // This would integrate with your existing reminder system
+  console.log('Checking study reminders...');
+}
+
+// Export functions for use in main thread
+self.getStoredActions = getStoredActions;
+self.storeAction = storeAction;
+self.removeStoredAction = removeStoredAction;
+</parameter>

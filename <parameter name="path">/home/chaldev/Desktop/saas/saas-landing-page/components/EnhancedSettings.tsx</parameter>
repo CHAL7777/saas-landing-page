@@ -1,0 +1,654 @@
+<parameter name="content">"use client";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  X, 
+  Monitor, 
+  Moon, 
+  Sun, 
+  Volume2, 
+  VolumeX,
+  Eye,
+  Type,
+  Palette,
+  Zap,
+  Bell,
+  Shield,
+  Download,
+  RefreshCw,
+  Trash2,
+  Save,
+  User,
+  Key,
+  Globe,
+  Smartphone,
+  Accessibility,
+  Target,
+  Clock,
+  BarChart3,
+  Settings as SettingsIcon
+} from "lucide-react";
+import { useEnhancedPWA } from "@/hooks/useEnhancedPWA";
+import { AccessibleButton } from "@/components/AccessibilityEnhancements";
+
+interface SettingsSection {
+  id: string;
+  title: string;
+  icon: React.ComponentType<any>;
+  description: string;
+}
+
+interface EnhancedSettingsProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface UserSettings {
+  theme: "light" | "dark" | "system";
+  notifications: boolean;
+  soundEnabled: boolean;
+  autoSave: boolean;
+  language: string;
+  timezone: string;
+  weekStartDay: "sunday" | "monday";
+  timeFormat: "12h" | "24h";
+  compactMode: boolean;
+  showAnimations: boolean;
+}
+
+interface AccessibilitySettings {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  fontSize: "small" | "medium" | "large" | "xl";
+  focusIndicators: boolean;
+  screenReaderOptimized: boolean;
+  colorBlindMode: "none" | "protanopia" | "deuteranopia" | "tritanopia";
+  voiceNavigation: boolean;
+  keyboardOnly: boolean;
+}
+
+export function EnhancedSettings({ isOpen, onClose }: EnhancedSettingsProps) {
+  const [activeSection, setActiveSection] = useState("general");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Settings state
+  const [userSettings, setUserSettings] = useState<UserSettings>({
+    theme: "dark",
+    notifications: true,
+    soundEnabled: true,
+    autoSave: true,
+    language: "en",
+    timezone: "UTC",
+    weekStartDay: "monday",
+    timeFormat: "24h",
+    compactMode: false,
+    showAnimations: true,
+  });
+
+  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>({
+    highContrast: false,
+    reducedMotion: false,
+    fontSize: "medium",
+    focusIndicators: true,
+    screenReaderOptimized: false,
+    colorBlindMode: "none",
+    voiceNavigation: false,
+    keyboardOnly: false,
+  });
+
+  const pwaFeatures = useEnhancedPWA();
+
+  const settingsSections: SettingsSection[] = [
+    { id: "general", title: "General", icon: SettingsIcon, description: "Basic app settings" },
+    { id: "appearance", title: "Appearance", icon: Palette, description: "Theme and visual options" },
+    { id: "notifications", title: "Notifications", icon: Bell, description: "Manage alerts and reminders" },
+    { id: "accessibility", title: "Accessibility", icon: Accessibility, description: "Accessibility preferences" },
+    { id: "pwa", title: "PWA", icon: Smartphone, description: "Progressive Web App settings" },
+    { id: "privacy", title: "Privacy", icon: Shield, description: "Data and privacy controls" },
+    { id: "performance", title: "Performance", icon: Zap, description: "App performance optimization" },
+  ];
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    if (isOpen) {
+      const savedUserSettings = localStorage.getItem("studymaster-user-settings");
+      const savedAccessibilitySettings = localStorage.getItem("studymaster-accessibility-settings");
+      
+      if (savedUserSettings) {
+        setUserSettings(JSON.parse(savedUserSettings));
+      }
+      
+      if (savedAccessibilitySettings) {
+        setAccessibilitySettings(JSON.parse(savedAccessibilitySettings));
+      }
+    }
+  }, [isOpen]);
+
+  // Save settings to localStorage
+  const saveSettings = () => {
+    localStorage.setItem("studymaster-user-settings", JSON.stringify(userSettings));
+    localStorage.setItem("studymaster-accessibility-settings", JSON.stringify(accessibilitySettings));
+    setHasUnsavedChanges(false);
+  };
+
+  // Handle setting changes
+  const updateUserSetting = (key: keyof UserSettings, value: any) => {
+    setUserSettings(prev => ({ ...prev, [key]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  const updateAccessibilitySetting = (key: keyof AccessibilitySettings, value: any) => {
+    setAccessibilitySettings(prev => ({ ...prev, [key]: value }));
+    setHasUnsavedChanges(true);
+  };
+
+  // Clear all data
+  const clearAllData = () => {
+    if (confirm("Are you sure you want to clear all data? This action cannot be undone.")) {
+      localStorage.clear();
+      window.location.reload();
+    }
+  };
+
+  const renderGeneralSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">Basic Preferences</h3>
+        
+        <div className="space-y-4">
+          {/* Language */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Language</label>
+            <select
+              value={userSettings.language}
+              onChange={(e) => updateUserSetting("language", e.target.value)}
+              className="w-full p-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-emerald-500/50"
+            >
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="zh">中文</option>
+            </select>
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Timezone</label>
+            <select
+              value={userSettings.timezone}
+              onChange={(e) => updateUserSetting("timezone", e.target.value)}
+              className="w-full p-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-emerald-500/50"
+            >
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">Eastern Time</option>
+              <option value="America/Chicago">Central Time</option>
+              <option value="America/Denver">Mountain Time</option>
+              <option value="America/Los_Angeles">Pacific Time</option>
+              <option value="Europe/London">London</option>
+              <option value="Europe/Paris">Paris</option>
+              <option value="Asia/Tokyo">Tokyo</option>
+            </select>
+          </div>
+
+          {/* Week Start Day */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Week Starts On</label>
+            <div className="flex gap-2">
+              {["sunday", "monday"].map((day) => (
+                <AccessibleButton
+                  key={day}
+                  onClick={() => updateUserSetting("weekStartDay", day)}
+                  variant={userSettings.weekStartDay === day ? "primary" : "ghost"}
+                  ariaLabel={`Week starts on ${day}`}
+                >
+                  {day.charAt(0).toUpperCase() + day.slice(1)}
+                </AccessibleButton>
+              ))}
+            </div>
+
+          {/* Time Format */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Time Format</label>
+            <div className="flex gap-2">
+              {["12h", "24h"].map((format) => (
+                <AccessibleButton
+                  key={format}
+                  onClick={() => updateUserSetting("timeFormat", format)}
+                  variant={userSettings.timeFormat === format ? "primary" : "ghost"}
+                  ariaLabel={`${format} time format`}
+                >
+                  {format}
+                </AccessibleButton>
+              ))}
+            </div>
+        </div>
+    </div>
+  );
+
+  const renderAppearanceSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">Visual Preferences</h3>
+        
+        <div className="space-y-4">
+          {/* Theme */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Theme</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: "light", icon: Sun, label: "Light" },
+                { value: "dark", icon: Moon, label: "Dark" },
+                { value: "system", icon: Monitor, label: "System" },
+              ].map(({ value, icon: Icon, label }) => (
+                <AccessibleButton
+                  key={value}
+                  onClick={() => updateUserSetting("theme", value)}
+                  variant={userSettings.theme === value ? "primary" : "ghost"}
+                  className="flex flex-col items-center gap-2 p-4"
+                  ariaLabel={`${label} theme`}
+                >
+                  <Icon size={20} />
+                  <span className="text-sm">{label}</span>
+                </AccessibleButton>
+              ))}
+            </div>
+
+          {/* Compact Mode */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Compact Mode</label>
+              <p className="text-slate-400 text-sm">Reduce spacing and padding</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateUserSetting("compactMode", !userSettings.compactMode)}
+              variant={userSettings.compactMode ? "primary" : "ghost"}
+              ariaLabel={`${userSettings.compactMode ? "Disable" : "Enable"} compact mode`}
+            >
+              {userSettings.compactMode ? <Eye size={16} /> : <Eye size={16} />}
+            </AccessibleButton>
+          </div>
+
+          {/* Show Animations */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Show Animations</label>
+              <p className="text-slate-400 text-sm">Enable UI animations and transitions</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateUserSetting("showAnimations", !userSettings.showAnimations)}
+              variant={userSettings.showAnimations ? "primary" : "ghost"}
+              ariaLabel={`${userSettings.showAnimations ? "Disable" : "Enable"} animations`}
+            >
+              <Zap size={16} />
+            </AccessibleButton>
+          </div>
+      </div>
+  );
+
+  const renderNotificationSettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">Notification Preferences</h3>
+        
+        <div className="space-y-4">
+          {/* Enable Notifications */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Enable Notifications</label>
+              <p className="text-slate-400 text-sm">Receive alerts for tasks and events</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateUserSetting("notifications", !userSettings.notifications)}
+              variant={userSettings.notifications ? "primary" : "ghost"}
+              ariaLabel={`${userSettings.notifications ? "Disable" : "Enable"} notifications`}
+            >
+              {userSettings.notifications ? <Bell size={16} /> : <Bell size={16} />}
+            </AccessibleButton>
+          </div>
+
+          {/* Sound Effects */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Sound Effects</label>
+              <p className="text-slate-400 text-sm">Play sounds for notifications</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateUserSetting("soundEnabled", !userSettings.soundEnabled)}
+              variant={userSettings.soundEnabled ? "primary" : "ghost"}
+              ariaLabel={`${userSettings.soundEnabled ? "Disable" : "Enable"} sound effects`}
+            >
+              {userSettings.soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </AccessibleButton>
+          </div>
+
+          {/* Auto Save */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Auto Save</label>
+              <p className="text-slate-400 text-sm">Automatically save changes</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateUserSetting("autoSave", !userSettings.autoSave)}
+              variant={userSettings.autoSave ? "primary" : "ghost"}
+              ariaLabel={`${userSettings.autoSave ? "Disable" : "Enable"} auto save`}
+            >
+              <Save size={16} />
+            </AccessibleButton>
+          </div>
+      </div>
+  );
+
+  const renderAccessibilitySettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">Accessibility Options</h3>
+        
+        <div className="space-y-4">
+          {/* High Contrast */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">High Contrast Mode</label>
+              <p className="text-slate-400 text-sm">Increase color contrast for better visibility</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateAccessibilitySetting("highContrast", !accessibilitySettings.highContrast)}
+              variant={accessibilitySettings.highContrast ? "primary" : "ghost"}
+              ariaLabel={`${accessibilitySettings.highContrast ? "Disable" : "Enable"} high contrast mode`}
+            >
+              <Eye size={16} />
+            </AccessibleButton>
+          </div>
+
+          {/* Reduced Motion */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Reduced Motion</label>
+              <p className="text-slate-400 text-sm">Minimize animations and transitions</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateAccessibilitySetting("reducedMotion", !accessibilitySettings.reducedMotion)}
+              variant={accessibilitySettings.reducedMotion ? "primary" : "ghost"}
+              ariaLabel={`${accessibilitySettings.reducedMotion ? "Disable" : "Enable"} reduced motion`}
+            >
+              <Zap size={16} />
+            </AccessibleButton>
+          </div>
+
+          {/* Font Size */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Font Size</label>
+            <select
+              value={accessibilitySettings.fontSize}
+              onChange={(e) => updateAccessibilitySetting("fontSize", e.target.value)}
+              className="w-full p-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-emerald-500/50"
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+              <option value="xl">Extra Large</option>
+            </select>
+          </div>
+
+          {/* Focus Indicators */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Enhanced Focus Indicators</label>
+              <p className="text-slate-400 text-sm">Make keyboard focus more visible</p>
+            </div>
+            <AccessibleButton
+              onClick={() => updateAccessibilitySetting("focusIndicators", !accessibilitySettings.focusIndicators)}
+              variant={accessibilitySettings.focusIndicators ? "primary" : "ghost"}
+              ariaLabel={`${accessibilitySettings.focusIndicators ? "Disable" : "Enable"} focus indicators`}
+            >
+              <Target size={16} />
+            </AccessibleButton>
+          </div>
+
+          {/* Color Blind Support */}
+          <div>
+            <label className="text-white font-medium mb-2 block">Color Blind Support</label>
+            <select
+              value={accessibilitySettings.colorBlindMode}
+              onChange={(e) => updateAccessibilitySetting("colorBlindMode", e.target.value)}
+              className="w-full p-3 bg-slate-800 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-emerald-500/50"
+            >
+              <option value="none">None</option>
+              <option value="protanopia">Protanopia (Red-blind)</option>
+              <option value="deuteranopia">Deuteranopia (Green-blind)</option>
+              <option value="tritanopia">Tritanopia (Blue-blind)</option>
+            </select>
+          </div>
+      </div>
+  );
+
+  const renderPWASettings = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-bold text-white mb-4">Progressive Web App</h3>
+        
+        <div className="space-y-4">
+          {/* App Status */}
+          <div className="p-4 bg-slate-800/50 rounded-xl border border-white/10">
+            <h4 className="text-white font-medium mb-2">Installation Status</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Installable:</span>
+                <span className={pwaFeatures.isInstallable ? "text-green-400" : "text-red-400"}>
+                  {pwaFeatures.isInstallable ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Installed:</span>
+                <span className={pwaFeatures.isInstalled ? "text-green-400" : "text-red-400"}>
+                  {pwaFeatures.isInstalled ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Online:</span>
+                <span className={pwaFeatures.isOnline ? "text-green-400" : "text-red-400"}>
+                  {pwaFeatures.isOnline ? "Yes" : "No"}
+                </span>
+              </div>
+          </div>
+
+          {/* Install App */}
+          {pwaFeatures.isInstallable && !pwaFeatures.isInstalled && (
+            <AccessibleButton
+              onClick={pwaFeatures.installApp}
+              variant="primary"
+              className="w-full"
+              ariaLabel="Install StudyMaster app"
+            >
+              <Download size={16} />
+              Install App
+            </AccessibleButton>
+          )}
+
+          {/* Update Available */}
+          {pwaFeatures.updateReady && (
+            <AccessibleButton
+              onClick={pwaFeatures.updateApp}
+              variant="secondary"
+              className="w-full"
+              ariaLabel="Update StudyMaster app"
+            >
+              <RefreshCw size={16} />
+              Update Available
+            </AccessibleButton>
+          )}
+
+          {/* Notification Permission */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-white font-medium">Push Notifications</label>
+              <p className="text-slate-400 text-sm">Enable browser push notifications</p>
+            </div>
+            <AccessibleButton
+              onClick={pwaFeatures.requestNotificationPermission}
+              variant={pwaFeatures.notificationPermission === "granted" ? "primary" : "ghost"}
+              ariaLabel="Request notification permission"
+            >
+              {pwaFeatures.notificationPermission === "granted" ? "Enabled" : "Request"}
+            </AccessibleButton>
+          </div>
+
+          {/* Clear Cache */}
+          <AccessibleButton
+            onClick={pwaFeatures.clearCache}
+            variant="danger"
+            className="w-full"
+            ariaLabel="Clear app cache"
+          >
+            <Trash2 size={16} />
+            Clear Cache
+          </AccessibleButton>
+        </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "general":
+        return renderGeneralSettings();
+      case "appearance":
+        return renderAppearanceSettings();
+      case "notifications":
+        return renderNotificationSettings();
+      case "accessibility":
+        return renderAccessibilitySettings();
+      case "pwa":
+        return renderPWASettings();
+      case "privacy":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-4">Privacy & Data</h3>
+              <div className="space-y-4">
+                <AccessibleButton
+                  onClick={clearAllData}
+                  variant="danger"
+                  className="w-full"
+                  ariaLabel="Clear all app data"
+                >
+                  <Trash2 size={16} />
+                  Clear All Data
+                </AccessibleButton>
+              </div>
+          </div>
+        );
+      case "performance":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-bold text-white mb-4">Performance</h3>
+              <div className="space-y-4">
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-white/10">
+                  <h4 className="text-white font-medium mb-2">Storage Usage</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Cache Size:</span>
+                      <span className="text-white">Calculating...</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Local Storage:</span>
+                      <span className="text-white">Calculating...</span>
+                    </div>
+                </div>
+            </div>
+        );
+      default:
+        return renderGeneralSettings();
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={onClose}
+          />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-4 md:inset-10 bg-slate-950 rounded-2xl border border-white/10 z-50 flex overflow-hidden"
+          >
+            {/* Sidebar */}
+            <div className="w-80 border-r border-white/10 p-6 overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Settings</h2>
+                <AccessibleButton
+                  onClick={onClose}
+                  variant="ghost"
+                  ariaLabel="Close settings"
+                >
+                  <X size={20} />
+                </AccessibleButton>
+              </div>
+
+              <nav className="space-y-2">
+                {settingsSections.map((section) => (
+                  <AccessibleButton
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    variant={activeSection === section.id ? "primary" : "ghost"}
+                    className={`w-full justify-start ${
+                      activeSection === section.id ? "" : "text-slate-400 hover:text-white"
+                    }`}
+                    ariaLabel={`${section.title} settings`}
+                  >
+                    <section.icon size={18} />
+                    <div className="text-left">
+                      <div className="font-medium">{section.title}</div>
+                      <div className="text-xs opacity-75">{section.description}</div>
+                  </AccessibleButton>
+                ))}
+              </nav>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6">
+                {renderContent()}
+              </div>
+
+            {/* Footer */}
+            {hasUnsavedChanges && (
+              <div className="border-t border-white/10 p-4 bg-slate-900/50">
+                <div className="flex items-center justify-between">
+                  <p className="text-yellow-400 text-sm">You have unsaved changes</p>
+                  <div className="flex gap-2">
+                    <AccessibleButton
+                      onClick={onClose}
+                      variant="ghost"
+                      size="sm"
+                      ariaLabel="Discard changes"
+                    >
+                      Discard
+                    </AccessibleButton>
+                    <AccessibleButton
+                      onClick={saveSettings}
+                      variant="primary"
+                      size="sm"
+                      ariaLabel="Save changes"
+                    >
+                      <Save size={16} />
+                      Save Changes
+                    </AccessibleButton>
+                  </div>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+</parameter>

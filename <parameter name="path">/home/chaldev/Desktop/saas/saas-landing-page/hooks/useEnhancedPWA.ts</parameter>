@@ -1,0 +1,413 @@
+<parameter name="content">"use client";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Download, Wifi, WifiOff, Bell, CheckCircle, X } from "lucide-react";
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+interface PWAState {
+  isInstallable: boolean;
+  isInstalled: boolean;
+  isOnline: boolean;
+  isUpdateAvailable: boolean;
+  installPrompt: BeforeInstallPromptEvent | null;
+  updateReady: boolean;
+  notificationPermission: NotificationPermission;
+  deferredPrompt: BeforeInstallPromptEvent | null;
+}
+
+interface UseEnhancedPWAReturn extends PWAState {
+  installApp: () => Promise<void>;
+  dismissInstallPrompt: () => void;
+  updateApp: () => void;
+  requestNotificationPermission: () => Promise<boolean>;
+  sendNotification: (title: string, options?: NotificationOptions) => void;
+  checkForUpdates: () => void;
+  clearCache: () => Promise<void>;
+  showInstallToast: boolean;
+  hideInstallToast: () => void;
+}
+
+export function useEnhancedPWA(): UseEnhancedPWAReturn {
+  const [state, setState] = useState<PWAState>({
+    isInstallable: false,
+    isInstalled: false,
+    isOnline: navigator.onLine,
+    isUpdateAvailable: false,
+    installPrompt: null,
+    updateReady: false,
+    notificationPermission: Notification.permission,
+    deferredPrompt: null,
+  });
+
+  const [showInstallToast, setShowInstallToast] = useState(false);
+
+  // Check if app is installed
+  const checkIfInstalled = useCallback(() => {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    const isInWebAppiOS = (window.navigator as any).standalone === true;
+    const isInWebAppChrome = window.matchMedia("(display-mode: fullscreen)").matches;
+    
+    setState(prev => ({
+      ...prev,
+      isInstalled: isStandalone || isInWebAppiOS || isInWebAppChrome,
+    }));
+  }, []);
+
+  // Handle install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      const event = e as BeforeInstallPromptEvent;
+      
+      setState(prev => ({
+        ...prev,
+        isInstallable: true,
+        deferredPrompt: event,
+      }));
+      
+      // Show install toast after a delay if not already installed
+      setTimeout(() => {
+        if (!state.isInstalled) {
+          setShowInstallToast(true);
+        }
+      }, 5000);
+    };
+
+    // Handle app installed
+    const handleAppInstalled = () => {
+      setState(prev => ({
+        ...prev,
+        isInstalled: true,
+        isInstallable: false,
+        deferredPrompt: null,
+      }));
+      setShowInstallToast(false);
+    };
+
+    // Handle online/offline status
+    const handleOnline = () => setState(prev => ({ ...prev, isOnline: true }));
+    const handleOffline = () => setState(prev => ({ ...prev, isOnline: false }));
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    // Check initial install state
+    checkIfInstalled();
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [checkIfInstalled, state.isInstalled]);
+
+  // Install app function
+  const installApp = useCallback(async () => {
+    if (!state.deferredPrompt) return;
+
+    try {
+      await state.deferredPrompt.prompt();
+      const { outcome } = await state.deferredPrompt.userChoice;
+      
+      if (outcome === "accepted") {
+        console.log("App installation accepted");
+      } else {
+        console.log("App installation dismissed");
+        setShowInstallToast(false);
+      }
+    } catch (error) {
+      console.error("Error installing app:", error);
+    }
+  }, [state.deferredPrompt]);
+
+  // Dismiss install toast
+  const dismissInstallPrompt = useCallback(() => {
+    setShowInstallToast(false);
+  }, []);
+
+  // Hide install toast
+  const hideInstallToast = useCallback(() => {
+    setShowInstallToast(false);
+  }, []);
+
+  // Update app function
+  const updateApp = useCallback(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration && registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          window.location.reload();
+        }
+      });
+    }
+  }, []);
+
+  // Request notification permission
+  const requestNotificationPermission = useCallback(async () => {
+    if (!("Notification" in window)) {
+      console.log("This browser does not support notifications");
+      return false;
+    }
+
+    if (Notification.permission === "granted") {
+      return true;
+    }
+
+    if (Notification.permission !== "denied") {
+      const permission = await Notification.requestPermission();
+      setState(prev => ({ ...prev, notificationPermission: permission }));
+      return permission === "granted";
+    }
+
+    return false;
+  }, []);
+
+  // Send notification
+  const sendNotification = useCallback((title: string, options: NotificationOptions = {}) => {
+    if (Notification.permission === "granted") {
+      const notification = new Notification(title, {
+        icon: "/icon.svg",
+        badge: "/badge.svg",
+        ...options,
+      });
+
+      // Auto close after 5 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+
+      return notification;
+    }
+  }, []);
+
+  // Check for updates
+  const checkForUpdates = useCallback(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          registration.update();
+        }
+      });
+    }
+  }, []);
+
+  // Clear cache
+  const clearCache = useCallback(async () => {
+    if ("caches" in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+      console.log("Cache cleared");
+    }
+  }, []);
+
+  return {
+    ...state,
+    installApp,
+    dismissInstallPrompt,
+    updateApp,
+    requestNotificationPermission,
+    sendNotification,
+    checkForUpdates,
+    clearCache,
+    showInstallToast,
+    hideInstallToast,
+  };
+}
+
+// PWA Install Toast Component
+export function PWAInstallToast({ 
+  onInstall, 
+  onDismiss,
+  show 
+}: { 
+  onInstall: () => void; 
+  onDismiss: () => void;
+  show: boolean;
+}) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 100, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 100, scale: 0.9 }}
+          className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50"
+        >
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <Download size={20} className="text-emerald-400" />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <h4 className="text-white font-bold mb-1">Install StudyMaster</h4>
+                <p className="text-slate-400 text-sm mb-3">
+                  Get the full experience with offline access and push notifications
+                </p>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={onInstall}
+                    className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-xl font-bold text-sm hover:bg-emerald-400 transition-colors"
+                  >
+                    Install
+                  </button>
+                  <button
+                    onClick={onDismiss}
+                    className="px-4 py-2 bg-white/5 text-slate-400 rounded-xl font-medium text-sm hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    Later
+                  </button>
+                </div>
+              
+              <button
+                onClick={onDismiss}
+                className="text-slate-500 hover:text-white transition-colors p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Connection Status Indicator
+export function ConnectionStatusIndicator({ isOnline }: { isOnline: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      className={`fixed top-20 right-6 z-40 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+        isOnline 
+          ? "bg-green-500/20 text-green-400 border border-green-500/20" 
+          : "bg-red-500/20 text-red-400 border border-red-500/20"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {isOnline ? (
+          <>
+            <Wifi size={14} />
+            <span>Online</span>
+          </>
+        ) : (
+          <>
+            <WifiOff size={14} />
+            <span>Offline</span>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// Update Available Notification
+export function UpdateAvailableNotification({ 
+  onUpdate, 
+  show 
+}: { 
+  onUpdate: () => void; 
+  show: boolean;
+}) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: -100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -100 }}
+          className="fixed top-20 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50"
+        >
+          <div className="bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle size={20} className="text-blue-400" />
+              </div>
+              
+              <div className="flex-1">
+                <h4 className="text-white font-bold mb-1">Update Available</h4>
+                <p className="text-slate-400 text-sm mb-3">
+                  A new version of StudyMaster is ready to install
+                </p>
+                
+                <button
+                  onClick={onUpdate}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-400 transition-colors"
+                >
+                  Update Now
+                </button>
+              </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// Notification Permission Request
+export function NotificationPermissionRequest({ 
+  onRequest, 
+  onDismiss,
+  show 
+}: { 
+  onRequest: () => void; 
+  onDismiss: () => void;
+  show: boolean;
+}) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 100, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 100, scale: 0.9 }}
+          className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50"
+        >
+          <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <Bell size={20} className="text-purple-400" />
+              </div>
+              
+              <div className="flex-1">
+                <h4 className="text-white font-bold mb-1">Enable Notifications</h4>
+                <p className="text-slate-400 text-sm mb-3">
+                  Get reminded about study sessions and deadlines
+                </p>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={onRequest}
+                    className="px-4 py-2 bg-purple-500 text-white rounded-xl font-bold text-sm hover:bg-purple-400 transition-colors"
+                  >
+                    Enable
+                  </button>
+                  <button
+                    onClick={onDismiss}
+                    className="px-4 py-2 bg-white/5 text-slate-400 rounded-xl font-medium text-sm hover:text-white hover:bg-white/10 transition-colors"
+                  >
+                    Skip
+                  </button>
+                </div>
+            </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+</parameter>
