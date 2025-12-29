@@ -8,6 +8,13 @@ const links = {
   support: ["Help Center", "Student Discounts", "Privacy Policy", "Terms of Service"]
 };
 
+// Social links configuration
+const socialLinks = [
+  { icon: Twitter, href: "#", label: "Twitter" },
+  { icon: Github, href: "https://github.com/CHAL7777", label: "GitHub" },
+  { icon: Linkedin, href: "#", label: "LinkedIn" }
+];
+
 export default function Footer() {
   return (
     <footer className="relative bg-[#020617] border-t border-white/5 pt-24 pb-12 overflow-hidden">
@@ -98,14 +105,17 @@ export default function Footer() {
         <div className="pt-12 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-6">
             <div className="flex gap-4">
-              {[Twitter, Github, Linkedin].map((Icon, i) => (
+              {socialLinks.map((social, i) => (
                 <motion.a 
                   whileHover={{ y: -3, backgroundColor: "rgba(16, 185, 129, 0.1)", borderColor: "rgba(16, 185, 129, 0.2)" }}
                   key={i} 
-                  href="#" 
+                  href={social.href}
+                  target={social.href.startsWith("http") ? "_blank" : undefined}
+                  rel={social.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-slate-500 hover:text-emerald-400 transition-all"
+                  aria-label={social.label}
                 >
-                  <Icon size={18} />
+                  <social.icon size={18} />
                 </motion.a>
               ))}
             </div>
